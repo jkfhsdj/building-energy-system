@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 楼宇操作日志</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #F5F7FA;
+        }
+        #app {
+            visibility: hidden;
+        }
+        #app.loaded {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html" class="active">楼宇管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="area.html" class="sidebar-item">
+                        <i class="fa fa-building"></i>
+                        <span class="sidebar-text">楼宇列表</span>
+                    </a>
+                    <a href="area-map.html" class="sidebar-item">
+                        <i class="fa fa-project-diagram"></i>
+                        <span class="sidebar-text">楼宇拓扑图</span>
+                    </a>
+                    <a href="area-stat.html" class="sidebar-item">
+                        <i class="fa fa-chart-bar"></i>
+                        <span class="sidebar-text">楼宇能耗统计</span>
+                    </a>
+                    <a href="area-log.html" class="sidebar-item active">
+                        <i class="fa fa-file-text"></i>
+                        <span class="sidebar-text">楼宇操作日志</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择楼宇</label>
+                            <el-select v-model="logParams.region" size="small" placeholder="请选择楼宇">
+                                <el-option label="全部楼宇" value="all"></el-option>
+                                <el-option label="全公司" value="all"></el-option>
+                                <el-option label="办公楼A" value="bldA"></el-option>
+                                <el-option label="办公楼B" value="bldB"></el-option>
+                                <el-option label="研发楼" value="rd"></el-option>
+                                <el-option label="生产厂房" value="factory"></el-option>
+                                <el-option label="员工宿舍楼" value="dorm"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>开始时间</label>
+                            <el-date-picker
+                                v-model="logParams.startTime"
+                                type="datetime"
+                                size="small"
+                                placeholder="选择开始时间"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>结束时间</label>
+                            <el-date-picker
+                                v-model="logParams.endTime"
+                                type="datetime"
+                                size="small"
+                                placeholder="选择结束时间"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>操作人</label>
+                            <el-input v-model="logParams.operator" size="small" placeholder="请输入操作人"></el-input>
+                        </div>
+                        <div class="search-item">
+                            <label>操作类型</label>
+                            <el-select v-model="logParams.actionType" size="small" placeholder="请选择操作类型">
+                                <el-option label="全部类型" value="all"></el-option>
+                                <el-option label="新增区域" value="add"></el-option>
+                                <el-option label="编辑区域" value="edit"></el-option>
+                                <el-option label="删除区域" value="delete"></el-option>
+                                <el-option label="配置变更" value="config"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleSearch">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                            <el-button type="success" size="small" @click="handleExport">
+                                <i class="fa fa-download"></i>
+                                导出日志
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-list"></i>
+                                楼宇操作日志
+                            </div>
+                        </div>
+                        <el-table :data="logData" class="data-table" stripe>
+                            <el-table-column prop="time" label="时间" width="180"></el-table-column>
+                            <el-table-column prop="region" label="楼宇名称" width="150"></el-table-column>
+                            <el-table-column prop="level" label="楼宇级别" width="100"></el-table-column>
+                            <el-table-column prop="operator" label="操作人" width="120"></el-table-column>
+                            <el-table-column prop="actionType" label="操作类型" width="120"></el-table-column>
+                            <el-table-column prop="result" label="操作结果">
+                                <template #default="scope">
+                                    <span class="badge" :class="scope.row.result === '成功' ? 'success' : 'danger'">
+                                        {{ scope.row.result }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="detail" label="配置变更记录" min-width="300"></el-table-column>
+                        </el-table>
+                        <div class="pagination-wrapper">
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="200"
+                                @current-change="handlePageChange"
+                            ></el-pagination>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const logParams = reactive({
+                    region: 'all',
+                    startTime: new Date(new Date().getTime() - 24 * 60 * 60 * 1000),
+                    endTime: new Date(),
+                    operator: '',
+                    actionType: 'all'
+                });
+                
+                const logData = ref([]);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleSearch = () => {
+                    ElementPlus.ElMessage.success('查询成功！');
+                    generateLogData();
+                };
+                
+                const handleReset = () => {
+                    logParams.region = 'all';
+                    logParams.startTime = new Date(new Date().getTime() - 24 * 60 * 60 * 1000);
+                    logParams.endTime = new Date();
+                    logParams.operator = '';
+                    logParams.actionType = 'all';
+                    generateLogData();
+                    ElementPlus.ElMessage.info('已重置筛选条件');
+                };
+                
+                const handleExport = () => {
+                    ElementPlus.ElMessage.success('日志导出成功！');
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const generateLogData = () => {
+                    const regions = ['全公司', '办公楼A', '办公楼B', '研发楼', '生产厂房', '员工宿舍楼', '食堂活动中心', '会议中心', '体育馆', '图书馆'];
+                    const levels = ['公司级', '楼宇级', '部门级'];
+                    const operators = ['张三', '李四', '王五', '赵六', '钱七'];
+                    const actionTypes = ['新增楼宇', '编辑楼宇', '删除楼宇', '配置变更'];
+                    const results = ['成功', '失败'];
+                    const details = [
+                        '修改楼宇名称：研发楼 → 研发中心',
+                        '修改楼宇设备数量：1234 → 1256',
+                        '修改楼宇负责人：张三 → 李四',
+                        '新增子区域：一层办公区',
+                        '删除子区域：地下停车场',
+                        '修改楼宇参数：阈值100 → 120',
+                        '修改楼宇状态：正常 → 维护中'
+                    ];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setMinutes(date.getMinutes() - i * 60);
+                        data.push({
+                            time: date.toLocaleString(),
+                            region: regions[Math.floor(Math.random() * regions.length)],
+                            level: levels[Math.floor(Math.random() * levels.length)],
+                            operator: operators[Math.floor(Math.random() * operators.length)],
+                            actionType: actionTypes[Math.floor(Math.random() * actionTypes.length)],
+                            result: Math.random() > 0.1 ? '成功' : '失败',
+                            detail: details[Math.floor(Math.random() * details.length)]
+                        });
+                    }
+                    logData.value = data;
+                };
+                
+                onMounted(() => {
+                    generateLogData();
+                    document.getElementById('app').classList.add('loaded');
+                });
+                
+                return {
+                    logParams,
+                    logData,
+                    isSidebarExpanded,
+                    handleSearch,
+                    handleReset,
+                    handleExport,
+                    handlePageChange,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

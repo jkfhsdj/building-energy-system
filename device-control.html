@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 批量管控控制</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html" class="active">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="device.html" class="sidebar-item">
+                        <i class="fa fa-list"></i>
+                        <span class="sidebar-text">设备列表</span>
+                    </a>
+                    <a href="device-control.html" class="sidebar-item active">
+                        <i class="fa fa-sliders"></i>
+                        <span class="sidebar-text">批量管控控制</span>
+                    </a>
+                    <a href="device-config.html" class="sidebar-item">
+                        <i class="fa fa-cogs"></i>
+                        <span class="sidebar-text">设备策略配置</span>
+                    </a>
+                    <a href="device-log.html" class="sidebar-item">
+                        <i class="fa fa-history"></i>
+                        <span class="sidebar-text">设备日志操作</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择建筑</label>
+                            <el-select v-model="controlParams.building" size="small" placeholder="请选择建筑">
+                                <el-option label="全部建筑" value="all"></el-option>
+                                <el-option label="办公楼A" value="buildingA"></el-option>
+                                <el-option label="实验楼B" value="buildingB"></el-option>
+                                <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                <el-option label="食堂D" value="buildingD"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>设备类型</label>
+                            <el-select v-model="controlParams.deviceType" size="small" placeholder="请选择设备类型">
+                                <el-option label="全部设备" value="all"></el-option>
+                                <el-option label="空调系统" value="hvac"></el-option>
+                                <el-option label="照明系统" value="lighting"></el-option>
+                                <el-option label="电梯系统" value="elevator"></el-option>
+                                <el-option label="水泵系统" value="pump"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>设备状态</label>
+                            <el-select v-model="controlParams.status" size="small" placeholder="请选择状态">
+                                <el-option label="全部状态" value="all"></el-option>
+                                <el-option label="在线" value="online"></el-option>
+                                <el-option label="离线" value="offline"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleSearch">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-sliders"></i>
+                                批量控制
+                            </div>
+                        </div>
+                        <div class="control-actions">
+                            <el-button type="success" class="btn btn-success" @click="batchStart">
+                                <i class="fa fa-play"></i>
+                                批量开机
+                            </el-button>
+                            <el-button type="danger" class="btn btn-danger" @click="batchStop">
+                                <i class="fa fa-stop"></i>
+                                批量关机
+                            </el-button>
+                            <el-button type="primary" class="btn btn-primary" @click="batchStandby">
+                                <i class="fa fa-pause"></i>
+                                批量待机
+                            </el-button>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-list"></i>
+                                设备列表
+                            </div>
+                        </div>
+                        <el-table :data="deviceData" class="data-table" stripe @selection-change="handleSelectionChange">
+                            <el-table-column type="selection" width="55"></el-table-column>
+                            <el-table-column prop="id" label="设备编号" width="120"></el-table-column>
+                            <el-table-column prop="name" label="设备名称" width="180"></el-table-column>
+                            <el-table-column prop="type" label="设备类型" width="120"></el-table-column>
+                            <el-table-column prop="building" label="所属建筑" width="120"></el-table-column>
+                            <el-table-column prop="status" label="状态" width="100">
+                                <template #default="scope">
+                                    <span class="badge" :class="scope.row.status === '在线' ? 'success' : 'danger'">
+                                        {{ scope.row.status }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="lastUpdate" label="最后更新" width="150"></el-table-column>
+                        </el-table>
+                        <div class="pagination-wrapper">
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="100"
+                                @current-change="handlePageChange"
+                            ></el-pagination>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const controlParams = reactive({
+                    building: 'all',
+                    deviceType: 'all',
+                    status: 'all'
+                });
+                
+                const showTable = ref(true);
+                const deviceData = ref([]);
+                const selectedDevices = ref([]);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleSearch = () => {
+                    showTable.value = true;
+                    nextTick(() => {
+                        generateDeviceData();
+                    });
+                };
+                
+                const handleReset = () => {
+                    controlParams.building = 'all';
+                    controlParams.deviceType = 'all';
+                    controlParams.status = 'all';
+                    showTable.value = true;
+                    nextTick(() => {
+                        generateDeviceData();
+                    });
+                };
+                
+                const batchStart = () => {
+                    if (selectedDevices.value.length === 0) {
+                        ElementPlus.ElMessage.warning('请先选择要控制的设备！');
+                        return;
+                    }
+                    ElementPlus.ElMessage.success(`已成功为 ${selectedDevices.value.length} 台设备执行开机操作！`);
+                };
+                
+                const batchStop = () => {
+                    if (selectedDevices.value.length === 0) {
+                        ElementPlus.ElMessage.warning('请先选择要控制的设备！');
+                        return;
+                    }
+                    ElementPlus.ElMessage.success(`已成功为 ${selectedDevices.value.length} 台设备执行关机操作！`);
+                };
+                
+                const batchStandby = () => {
+                    if (selectedDevices.value.length === 0) {
+                        ElementPlus.ElMessage.warning('请先选择要控制的设备！');
+                        return;
+                    }
+                    ElementPlus.ElMessage.success(`已成功为 ${selectedDevices.value.length} 台设备执行待机操作！`);
+                };
+                
+                const handleSelectionChange = (selection) => {
+                    selectedDevices.value = selection;
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                onMounted(() => {
+                    nextTick(() => {
+                        generateDeviceData();
+                    });
+                });
+                
+                const generateDeviceData = () => {
+                    const buildings = ['办公楼A', '实验楼B', '宿舍楼C', '食堂D'];
+                    const types = ['空调系统', '照明系统', '电梯系统', '水泵系统'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        data.push({
+                            id: `DEV${String(i + 1).padStart(3, '0')}`,
+                            name: `${types[Math.floor(Math.random() * types.length)]}-${String(i + 1).padStart(2, '0')}`,
+                            type: types[Math.floor(Math.random() * types.length)],
+                            building: buildings[Math.floor(Math.random() * buildings.length)],
+                            status: Math.random() > 0.2 ? '在线' : '离线',
+                            lastUpdate: new Date().toLocaleString()
+                        });
+                    }
+                    deviceData.value = data;
+                };
+                
+                return {
+                    controlParams,
+                    showTable,
+                    deviceData,
+                    selectedDevices,
+                    isSidebarExpanded,
+                    handleSearch,
+                    handleReset,
+                    batchStart,
+                    batchStop,
+                    batchStandby,
+                    handleSelectionChange,
+                    handlePageChange,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

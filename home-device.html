@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 设备分布统计</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html" class="active">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="home.html" class="sidebar-item">
+                        <i class="fa fa-home"></i>
+                        <span class="sidebar-text">首页概览</span>
+                    </a>
+                    <a href="home-energy.html" class="sidebar-item">
+                        <i class="fa fa-chart-line"></i>
+                        <span class="sidebar-text">公司能耗总览</span>
+                    </a>
+                    <a href="home-province.html" class="sidebar-item">
+                        <i class="fa fa-building"></i>
+                        <span class="sidebar-text">楼宇能耗详情</span>
+                    </a>
+                    <a href="home-device.html" class="sidebar-item active">
+                        <i class="fa fa-pie-chart"></i>
+                        <span class="sidebar-text">设备分布统计</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1 class="header-title">
+                            <i class="fa fa-pie-chart"></i>
+                            设备分布统计
+                        </h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-info-card">
+                            <div class="user-info-row">
+                                <div class="card-time">
+                                    <i class="fa fa-clock"></i>
+                                    {{ currentTime }}
+                                </div>
+                            </div>
+                            <div class="user-info-row">
+                                <div class="card-user">
+                                    <i class="fa fa-user-circle"></i>
+                                    <span>管理员</span>
+                                </div>
+                                <div class="card-status">
+                                    <span class="status-dot"></span>
+                                    在线
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="top-cards">
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-server"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">12,586</div>
+                            <div class="card-label">设备总数</div>
+                        </div>
+                        <div class="card-trend up">
+                            <i class="fa fa-arrow-up"></i>
+                            <span>126</span>
+                        </div>
+                    </div>
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-check-circle"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">11,987</div>
+                            <div class="card-label">在线设备</div>
+                        </div>
+                        <div class="card-trend highlight">
+                            <span>95.2%</span>
+                        </div>
+                    </div>
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-exclamation-triangle"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">458</div>
+                            <div class="card-label">离线设备</div>
+                        </div>
+                        <div class="card-trend down">
+                            <i class="fa fa-arrow-down"></i>
+                            <span>23</span>
+                        </div>
+                    </div>
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-wrench"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">141</div>
+                            <div class="card-label">维护中设备</div>
+                        </div>
+                        <div class="card-trend highlight">
+                            <span>1.1%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div class="chart-box">
+                        <div class="chart-title">
+                            <i class="fa fa-pie-chart"></i>
+                            设备类型占比
+                        </div>
+                        <div id="typeChart" style="width: 100%; height: 350px;"></div>
+                    </div>
+                    <div class="chart-box">
+                        <div class="chart-title">
+                            <i class="fa fa-pie-chart"></i>
+                            设备状态分布
+                        </div>
+                        <div id="statusChart" style="width: 100%; height: 350px;"></div>
+                    </div>
+                </div>
+
+                <div class="chart-box chart-box-full">
+                    <div class="chart-title">
+                        <i class="fa fa-bar-chart"></i>
+                        各楼宇设备分布
+                    </div>
+                    <div id="regionChart" style="width: 100%; height: 400px;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa fa-table"></i>
+                            设备分布详情
+                        </div>
+                    </div>
+                    <el-table :data="deviceData" class="data-table" stripe style="width: 100%;">
+                        <el-table-column prop="region" label="楼宇" width="160" align="center"></el-table-column>
+                        <el-table-column prop="hvac" label="空调系统" width="150" align="center"></el-table-column>
+                        <el-table-column prop="lighting" label="照明系统" width="150" align="center"></el-table-column>
+                        <el-table-column prop="elevator" label="电梯系统" width="150" align="center"></el-table-column>
+                        <el-table-column prop="pump" label="水泵系统" width="150" align="center"></el-table-column>
+                        <el-table-column prop="other" label="其他设备" width="150" align="center"></el-table-column>
+                        <el-table-column prop="total" label="总计" width="140" align="center"></el-table-column>
+                        <el-table-column prop="onlineRate" label="在线率" width="180" align="center">
+                            <template #default="scope">
+                                <el-progress :percentage="scope.row.onlineRate" :color="getProgressColor(scope.row.onlineRate)"></el-progress>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const currentTime = ref('');
+                const isSidebarExpanded = ref(false);
+                
+                const deviceData = ref([
+                    { region: '办公楼A', hvac: 520, lighting: 1280, elevator: 86, pump: 320, other: 156, total: 2362, onlineRate: 96.2 },
+                    { region: '办公楼B', hvac: 680, lighting: 1650, elevator: 112, pump: 420, other: 208, total: 3070, onlineRate: 95.8 },
+                    { region: '研发楼', hvac: 590, lighting: 1420, elevator: 95, pump: 365, other: 182, total: 2652, onlineRate: 94.5 },
+                    { region: '生产厂房', hvac: 320, lighting: 780, elevator: 52, pump: 198, other: 98, total: 1448, onlineRate: 93.8 },
+                    { region: '员工宿舍楼', hvac: 380, lighting: 920, elevator: 62, pump: 235, other: 115, total: 1712, onlineRate: 95.1 },
+                    { region: '食堂活动中心', hvac: 280, lighting: 680, elevator: 46, pump: 175, other: 86, total: 1267, onlineRate: 96.5 }
+                ]);
+                
+                const getProgressColor = (rate) => {
+                    if (rate >= 95) return '#27ae60';
+                    if (rate >= 90) return '#f39c12';
+                    return '#e74c3c';
+                };
+                
+                const updateTime = () => {
+                    const now = new Date();
+                    currentTime.value = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                };
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const initTypeChart = () => {
+                    const chartDom = document.getElementById('typeChart');
+                    if (!chartDom) return;
+                    
+                    const chart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'item',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: 'rgb(0, 170, 255)',
+                            textStyle: { color: '#333' }
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            top: 'center'
+                        },
+                        series: [
+                            {
+                                name: '设备类型',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                center: ['60%', '50%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                label: {
+                                    show: false,
+                                    position: 'center'
+                                },
+                                emphasis: {
+                                    label: {
+                                        show: true,
+                                        fontSize: 16,
+                                        fontWeight: 'bold'
+                                    }
+                                },
+                                labelLine: {
+                                    show: false
+                                },
+                                data: [
+                                    { value: 2770, name: '空调系统', itemStyle: { color: 'rgb(12, 78, 55)' } },
+                                    { value: 6730, name: '照明系统', itemStyle: { color: 'rgb(0, 170, 255)' } },
+                                    { value: 453, name: '电梯系统', itemStyle: { color: 'rgb(18, 100, 70)' } },
+                                    { value: 1713, name: '水泵系统', itemStyle: { color: 'rgb(46, 150, 100)' } },
+                                    { value: 845, name: '其他设备', itemStyle: { color: 'rgb(0, 150, 225)' } }
+                                ]
+                            }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                };
+                
+                const initStatusChart = () => {
+                    const chartDom = document.getElementById('statusChart');
+                    if (!chartDom) return;
+                    
+                    const chart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'item',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: 'rgb(0, 170, 255)',
+                            textStyle: { color: '#333' }
+                        },
+                        legend: {
+                            orient: 'vertical',
+                            left: 'left',
+                            top: 'center'
+                        },
+                        series: [
+                            {
+                                name: '设备状态',
+                                type: 'pie',
+                                radius: ['40%', '70%'],
+                                center: ['60%', '50%'],
+                                avoidLabelOverlap: false,
+                                itemStyle: {
+                                    borderRadius: 10,
+                                    borderColor: '#fff',
+                                    borderWidth: 2
+                                },
+                                data: [
+                                    { value: 11987, name: '在线', itemStyle: { color: '#27ae60' } },
+                                    { value: 458, name: '离线', itemStyle: { color: '#e74c3c' } },
+                                    { value: 141, name: '维护中', itemStyle: { color: '#f39c12' } }
+                                ]
+                            }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                };
+                
+                const initRegionChart = () => {
+                    const chartDom = document.getElementById('regionChart');
+                    if (!chartDom) return;
+                    
+                    const chart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: 'rgb(0, 170, 255)',
+                            textStyle: { color: '#333' }
+                        },
+                        legend: {
+                            data: ['空调系统', '照明系统', '电梯系统', '水泵系统', '其他设备'],
+                            top: 0
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: ['办公楼A', '办公楼B', '研发楼', '生产厂房', '员工宿舍楼', '食堂活动中心'],
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' },
+                            splitLine: { lineStyle: { color: '#f0f0f0' } }
+                        },
+                        series: [
+                            {
+                                name: '空调系统',
+                                type: 'bar',
+                                stack: 'total',
+                                barWidth: '40%',
+                                data: [520, 680, 590, 320, 380, 280],
+                                itemStyle: { color: 'rgb(12, 78, 55)' }
+                            },
+                            {
+                                name: '照明系统',
+                                type: 'bar',
+                                stack: 'total',
+                                barWidth: '40%',
+                                data: [1280, 1650, 1420, 780, 920, 680],
+                                itemStyle: { color: 'rgb(0, 170, 255)' }
+                            },
+                            {
+                                name: '电梯系统',
+                                type: 'bar',
+                                stack: 'total',
+                                barWidth: '40%',
+                                data: [86, 112, 95, 52, 62, 46],
+                                itemStyle: { color: 'rgb(18, 100, 70)' }
+                            },
+                            {
+                                name: '水泵系统',
+                                type: 'bar',
+                                stack: 'total',
+                                barWidth: '40%',
+                                data: [320, 420, 365, 198, 235, 175],
+                                itemStyle: { color: 'rgb(46, 150, 100)' }
+                            },
+                            {
+                                name: '其他设备',
+                                type: 'bar',
+                                stack: 'total',
+                                barWidth: '40%',
+                                stack: 'total',
+                                data: [156, 208, 182, 98, 115, 86],
+                                itemStyle: { color: 'rgb(0, 150, 225)' }
+                            }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                };
+                
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                    initTypeChart();
+                    initStatusChart();
+                    initRegionChart();
+                });
+                
+                return {
+                    currentTime,
+                    deviceData,
+                    isSidebarExpanded,
+                    getProgressColor,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

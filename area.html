@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 楼宇管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html" class="active">楼宇管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="area.html" class="sidebar-item active">
+                        <i class="fa fa-building"></i>
+                        <span class="sidebar-text">楼宇列表</span>
+                    </a>
+                    <a href="area-map.html" class="sidebar-item">
+                        <i class="fa fa-project-diagram"></i>
+                        <span class="sidebar-text">楼宇拓扑图</span>
+                    </a>
+                    <a href="area-stat.html" class="sidebar-item">
+                        <i class="fa fa-chart-bar"></i>
+                        <span class="sidebar-text">楼宇能耗统计</span>
+                    </a>
+                    <a href="area-log.html" class="sidebar-item">
+                        <i class="fa fa-file-text"></i>
+                        <span class="sidebar-text">楼宇配置日志</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1 class="header-title">
+                            <i class="fa fa-building"></i>
+                            楼宇管理
+                        </h1>
+                        <div class="region-selector">
+                            <el-radio-group v-model="selectedRegion" size="small">
+                                <el-radio-button label="公司"></el-radio-button>
+                                <el-radio-button label="楼宇"></el-radio-button>
+                            </el-radio-group>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-info-card">
+                            <div class="user-info-row">
+                                <div class="card-time">
+                                    <i class="fa fa-clock"></i>
+                                    {{ currentTime }}
+                                </div>
+                            </div>
+                            <div class="user-info-row">
+                                <div class="card-user">
+                                    <i class="fa fa-user-circle"></i>
+                                    <span>管理员</span>
+                                </div>
+                                <div class="card-status">
+                                    <span class="status-dot"></span>
+                                    在线
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="module-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fa fa-list"></i>
+                            楼宇列表
+                        </h2>
+                        <div class="section-actions">
+                            <el-button size="small" class="btn btn-outline">
+                                <i class="fa fa-filter"></i>
+                                筛选
+                            </el-button>
+                            <el-button size="small" class="btn btn-primary">
+                                <i class="fa fa-plus"></i>
+                                新增楼宇
+                            </el-button>
+                        </div>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <el-table :data="regionTableData" class="data-table" stripe>
+                            <el-table-column prop="code" label="楼宇代码" width="100"></el-table-column>
+                            <el-table-column prop="name" label="楼宇名称" width="150"></el-table-column>
+                            <el-table-column prop="level" label="楼宇级别" width="100"></el-table-column>
+                            <el-table-column prop="deviceCount" label="设备数量" width="100"></el-table-column>
+                            <el-table-column prop="totalEnergy" label="总能耗 (kWh)" width="130"></el-table-column>
+                            <el-table-column prop="status" label="状态" width="100">
+                                <template #default="scope">
+                                    <span class="badge" :class="scope.row.status === '正常' ? 'success' : 'warning'">
+                                        {{ scope.row.status }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column label="操作" width="180">
+                                <template #default="scope">
+                                    <el-button type="primary" size="small" @click="viewRegion(scope.row)">
+                                        <i class="fa fa-eye"></i>
+                                        查看
+                                    </el-button>
+                                    <el-button type="success" size="small" @click="editRegion(scope.row)">
+                                        <i class="fa fa-edit"></i>
+                                        编辑
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+
+                <div class="module-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fa fa-chart-bar"></i>
+                            楼宇统计
+                        </h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fa fa-building"></i>
+                            <div class="value">12</div>
+                            <div class="label">楼宇总数</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-server"></i>
+                            <div class="value">12,586</div>
+                            <div class="label">设备总数</div>
+                        </div>
+                        <div class="stat-card highlight">
+                            <i class="fa fa-bolt"></i>
+                            <div class="value">2,456.8</div>
+                            <div class="label">今日总能耗 (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-leaf"></i>
+                            <div class="value">12.5%</div>
+                            <div class="label">节能率</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, onMounted, reactive } = Vue;
+        
+        createApp({
+            setup() {
+                const selectedRegion = ref('公司');
+                const currentTime = ref('');
+                const isSidebarExpanded = ref(false);
+                
+                const regionTableData = ref([
+                    { code: 'HQ001', name: '全公司', level: '公司级', deviceCount: 12586, totalEnergy: 2456.8, status: '正常' },
+                    { code: 'BLDA01', name: '办公楼A', level: '楼宇级', deviceCount: 2356, totalEnergy: 567.2, status: '正常' },
+                    { code: 'BLDB01', name: '办公楼B', level: '楼宇级', deviceCount: 1892, totalEnergy: 423.5, status: '正常' },
+                    { code: 'RD001', name: '研发楼', level: '楼宇级', deviceCount: 2156, totalEnergy: 498.3, status: '警告' },
+                    { code: 'FAC01', name: '生产厂房', level: '楼宇级', deviceCount: 1987, totalEnergy: 389.6, status: '正常' }
+                ]);
+                
+                const updateTime = () => {
+                    const now = new Date();
+                    currentTime.value = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                };
+                
+                const viewRegion = (row) => {
+                    ElementPlus.ElMessage.info(`查看楼宇：${row.name}`);
+                };
+                
+                const editRegion = (row) => {
+                    ElementPlus.ElMessage.info(`编辑楼宇：${row.name}`);
+                };
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                });
+                
+                return {
+                    selectedRegion,
+                    currentTime,
+                    isSidebarExpanded,
+                    regionTableData,
+                    viewRegion,
+                    editRegion,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

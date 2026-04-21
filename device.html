@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 设备管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html" class="active">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="device.html" class="sidebar-item active">
+                        <i class="fa fa-list"></i>
+                        <span class="sidebar-text">设备列表</span>
+                    </a>
+                    <a href="device-control.html" class="sidebar-item">
+                        <i class="fa fa-sliders-h"></i>
+                        <span class="sidebar-text">批量管控</span>
+                    </a>
+                    <a href="device-config.html" class="sidebar-item">
+                        <i class="fa fa-cogs"></i>
+                        <span class="sidebar-text">策略配置</span>
+                    </a>
+                    <a href="device-log.html" class="sidebar-item">
+                        <i class="fa fa-history"></i>
+                        <span class="sidebar-text">操作日志</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1 class="header-title">
+                            <i class="fa fa-cogs"></i>
+                            设备管理
+                        </h1>
+                        <div class="region-selector">
+                    <el-radio-group v-model="selectedRegion" size="small">
+                        <el-radio-button label="全公司"></el-radio-button>
+                        <el-radio-button label="楼宇"></el-radio-button>
+                    </el-radio-group>
+                </div>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-info-card">
+                            <div class="user-info-row">
+                                <div class="card-time">
+                                    <i class="fa fa-clock"></i>
+                                    {{ currentTime }}
+                                </div>
+                            </div>
+                            <div class="user-info-row">
+                                <div class="card-user">
+                                    <i class="fa fa-user-circle"></i>
+                                    <span>管理员</span>
+                                </div>
+                                <div class="card-status">
+                                    <span class="status-dot"></span>
+                                    在线
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="module-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fa fa-server"></i>
+                            设备列表
+                        </h2>
+                        <div class="section-actions">
+                            <el-button size="small" class="btn btn-outline">
+                                <i class="fa fa-filter"></i>
+                                筛选
+                            </el-button>
+                            <el-button size="small" class="btn btn-primary">
+                                <i class="fa fa-plus"></i>
+                                新增设备
+                            </el-button>
+                        </div>
+                    </div>
+                    <div class="data-table-wrapper">
+                        <el-table :data="deviceTableData" class="data-table" stripe>
+                            <el-table-column prop="id" label="设备编号" width="120"></el-table-column>
+                            <el-table-column prop="name" label="设备名称" width="180"></el-table-column>
+                            <el-table-column prop="type" label="设备类型" width="120"></el-table-column>
+                            <el-table-column prop="region" label="所属楼宇" width="120"></el-table-column>
+                            <el-table-column prop="status" label="状态" width="100">
+                                <template #default="scope">
+                                    <span class="badge" :class="scope.row.status === '在线' ? 'success' : 'danger'">
+                                        {{ scope.row.status }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="energy" label="能耗 (kWh)" width="120"></el-table-column>
+                            <el-table-column prop="lastUpdate" label="最后更新" width="150"></el-table-column>
+                            <el-table-column label="操作" width="180">
+                                <template #default="scope">
+                                    <el-button type="primary" size="small" @click="viewDevice(scope.row)">
+                                        <i class="fa fa-eye"></i>
+                                        查看
+                                    </el-button>
+                                    <el-button type="success" size="small" @click="editDevice(scope.row)">
+                                        <i class="fa fa-edit"></i>
+                                        编辑
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                    </div>
+                </div>
+
+                <div class="module-section">
+                    <div class="section-header">
+                        <h2 class="section-title">
+                            <i class="fa fa-chart-pie"></i>
+                            设备统计
+                        </h2>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fa fa-server"></i>
+                            <div class="value">12,586</div>
+                            <div class="label">设备总数</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-check-circle"></i>
+                            <div class="value">12,485</div>
+                            <div class="label">在线设备</div>
+                        </div>
+                        <div class="stat-card highlight">
+                            <i class="fa fa-times-circle"></i>
+                            <div class="value">101</div>
+                            <div class="label">离线设备</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-signal"></i>
+                            <div class="value">99.2%</div>
+                            <div class="label">设备在线率</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, onMounted, reactive } = Vue;
+        
+        createApp({
+            setup() {
+                const selectedRegion = ref('全公司');
+                const currentTime = ref('');
+                const isSidebarExpanded = ref(false);
+                
+                const deviceTableData = ref([
+                    { id: 'DEV001', name: '中央空调主机-01', type: '空调', region: '办公楼A', status: '在线', energy: 1256.8, lastUpdate: '2024-04-02 14:32:15' },
+                    { id: 'DEV002', name: '照明系统-东区', type: '照明', region: '办公楼B', status: '在线', energy: 456.2, lastUpdate: '2024-04-02 14:30:22' },
+                    { id: 'DEV003', name: '电梯系统-02', type: '电梯', region: '研发楼', status: '在线', energy: 234.5, lastUpdate: '2024-04-02 14:28:33' },
+                    { id: 'DEV004', name: '水泵系统-01', type: '水泵', region: '生产厂房', status: '离线', energy: 0, lastUpdate: '2024-04-02 12:15:47' },
+                    { id: 'DEV005', name: '通风系统-03', type: '通风', region: '员工宿舍楼', status: '在线', energy: 189.3, lastUpdate: '2024-04-02 14:25:58' }
+                ]);
+                
+                const updateTime = () => {
+                    const now = new Date();
+                    currentTime.value = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                };
+                
+                const viewDevice = (row) => {
+                    ElementPlus.ElMessage.info(`查看设备：${row.name}`);
+                };
+                
+                const editDevice = (row) => {
+                    ElementPlus.ElMessage.info(`编辑设备：${row.name}`);
+                };
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                });
+                
+                return {
+                    selectedRegion,
+                    currentTime,
+                    isSidebarExpanded,
+                    deviceTableData,
+                    viewDevice,
+                    editDevice,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

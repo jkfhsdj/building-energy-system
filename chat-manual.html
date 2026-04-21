@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 系统操作手册</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html" class="active">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="chat.html" class="sidebar-item">
+                        <i class="fa fa-robot"></i>
+                        <span class="sidebar-text">智能问答</span>
+                    </a>
+                    <a href="chat-faq.html" class="sidebar-item">
+                        <i class="fa fa-question-circle"></i>
+                        <span class="sidebar-text">常见问题库</span>
+                    </a>
+                    <a href="chat-suggest.html" class="sidebar-item">
+                        <i class="fa fa-lightbulb-o"></i>
+                        <span class="sidebar-text">节能建议咨询</span>
+                    </a>
+                    <a href="chat-manual.html" class="sidebar-item active">
+                        <i class="fa fa-book"></i>
+                        <span class="sidebar-text">系统操作手册</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <div class="container">
+                    <h1 class="page-title">
+                        <i class="fa fa-book"></i>
+                        系统操作手册
+                    </h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-list"></i>
+                                手册目录
+                            </div>
+                        </div>
+                        <div class="manual-toc">
+                            <el-tree
+                                :data="manualTree"
+                                :props="defaultProps"
+                                node-key="id"
+                                default-expand-all
+                                @node-click="handleNodeClick"
+                            ></el-tree>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-file-text-o"></i>
+                                {{ currentSection.title }}
+                            </div>
+                            <el-button size="small" class="btn btn-primary" @click="downloadManual">
+                                <i class="fa fa-download"></i>
+                                下载手册
+                            </el-button>
+                        </div>
+                        <div class="manual-content">
+                            <div class="content-section" v-for="(section, index) in currentSection.content" :key="index">
+                                <h3 v-if="section.type === 'heading'" class="content-heading">
+                                    <i class="fa fa-caret-right"></i>
+                                    {{ section.text }}
+                                </h3>
+                                <p v-else-if="section.type === 'paragraph'" class="content-paragraph">
+                                    {{ section.text }}
+                                </p>
+                                <div v-else-if="section.type === 'list'" class="content-list">
+                                    <div v-for="(item, idx) in section.items" :key="idx" class="list-item">
+                                        <i class="fa fa-check-circle-o"></i>
+                                        <span>{{ item }}</span>
+                                    </div>
+                                </div>
+                                <div v-else-if="section.type === 'tip'" class="content-tip">
+                                    <i class="fa fa-lightbulb-o"></i>
+                                    <span>{{ section.text }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script>
+        const { createApp, ref, reactive } = Vue;
+        
+        createApp({
+            setup() {
+                const isSidebarExpanded = ref(false);
+                
+                const defaultProps = {
+                    children: 'children',
+                    label: 'label'
+                };
+                
+                const manualTree = ref([
+                    {
+                        id: '1',
+                        label: '1. 系统概述',
+                        children: [
+                            { id: '1-1', label: '1.1 系统介绍' },
+                            { id: '1-2', label: '1.2 功能特点' },
+                            { id: '1-3', label: '1.3 技术架构' }
+                        ]
+                    },
+                    {
+                        id: '2',
+                        label: '2. 快速入门',
+                        children: [
+                            { id: '2-1', label: '2.1 登录系统' },
+                            { id: '2-2', label: '2.2 界面介绍' },
+                            { id: '2-3', label: '2.3 基本操作' }
+                        ]
+                    },
+                    {
+                        id: '3',
+                        label: '3. 数据查询',
+                        children: [
+                            { id: '3-1', label: '3.1 实时数据查询' },
+                            { id: '3-2', label: '3.2 历史数据查询' },
+                            { id: '3-3', label: '3.3 数据导出' }
+                        ]
+                    },
+                    {
+                        id: '4',
+                        label: '4. 统计分析',
+                        children: [
+                            { id: '4-1', label: '4.1 能耗分析' },
+                            { id: '4-2', label: '4.2 能效分析' },
+                            { id: '4-3', label: '4.3 异常检测' },
+                            { id: '4-4', label: '4.4 报表管理' }
+                        ]
+                    },
+                    {
+                        id: '5',
+                        label: '5. 设备管理',
+                        children: [
+                            { id: '5-1', label: '5.1 设备列表' },
+                            { id: '5-2', label: '5.2 批量管控' },
+                            { id: '5-3', label: '5.3 策略配置' },
+                            { id: '5-4', label: '5.4 日志查询' }
+                        ]
+                    },
+                    {
+                        id: '6',
+                        label: '6. 区域管理',
+                        children: [
+                            { id: '6-1', label: '6.1 区域列表' },
+                            { id: '6-2', label: '6.2 拓扑图' },
+                            { id: '6-3', label: '6.3 能耗统计' },
+                            { id: '6-4', label: '6.4 配置日志' }
+                        ]
+                    },
+                    {
+                        id: '7',
+                        label: '7. 智能问答',
+                        children: [
+                            { id: '7-1', label: '7.1 智能问答' },
+                            { id: '7-2', label: '7.2 常见问题库' },
+                            { id: '7-3', label: '7.3 节能建议' },
+                            { id: '7-4', label: '7.4 操作手册' }
+                        ]
+                    },
+                    {
+                        id: '8',
+                        label: '8. 系统设置',
+                        children: [
+                            { id: '8-1', label: '8.1 用户管理' },
+                            { id: '8-2', label: '8.2 权限管理' },
+                            { id: '8-3', label: '8.3 系统配置' }
+                        ]
+                    }
+                ]);
+                
+                const manualContent = reactive({
+                    '1': {
+                        title: '1. 系统概述',
+                        content: [
+                            { type: 'heading', text: '1.1 系统介绍' },
+                            { type: 'paragraph', text: '建筑能源智能管理与运营优化系统是一套集数据采集、监控、分析、优化于一体的综合能源管理平台。系统通过实时采集建筑内各类设备的能耗数据，运用大数据分析和人工智能算法，实现能耗精细化管理、设备优化运行、异常智能检测、节能建议推荐等功能，帮助用户降低能源消耗，提高能源利用效率，实现可持续发展。' },
+                            { type: 'heading', text: '1.2 功能特点' },
+                            { type: 'list', items: [
+                                '实时数据采集：支持电、水、气等多种能源数据实时采集',
+                                '智能监控告警：7×24小时实时监控，异常情况及时告警',
+                                '多维度分析：提供丰富的图表和报表，支持多维度数据分析',
+                                '设备优化管理：支持设备批量管控和策略配置',
+                                '智能节能建议：基于AI算法提供个性化节能建议',
+                                '可视化展示：直观的可视化界面，便于操作和决策',
+                                '移动端支持：支持移动端访问，随时随地查看数据'
+                            ]},
+                            { type: 'heading', text: '1.3 技术架构' },
+                            { type: 'paragraph', text: '系统采用B/S架构，前端使用Vue3+Element Plus，后端采用微服务架构，数据存储采用MySQL+Redis，消息队列采用RabbitMQ，大数据处理采用Spark，人工智能算法采用TensorFlow。系统具有高可靠性、高可扩展性、高安全性等特点。' }
+                        ]
+                    },
+                    '2': {
+                        title: '2. 快速入门',
+                        content: [
+                            { type: 'heading', text: '2.1 登录系统' },
+                            { type: 'paragraph', text: '打开浏览器，输入系统访问地址，进入登录页面。输入用户名和密码，点击"登录"按钮即可进入系统。首次登录建议修改初始密码，确保账户安全。' },
+                            { type: 'tip', text: '提示：请使用Chrome、Firefox、Edge等现代浏览器访问系统，以获得最佳体验。' },
+                            { type: 'heading', text: '2.2 界面介绍' },
+                            { type: 'paragraph', text: '系统界面主要由顶部导航栏、左侧侧边栏、主内容区组成。顶部导航栏包含系统logo和主要功能模块入口。左侧侧边栏包含当前模块的子菜单。主内容区显示具体的功能页面和数据。' },
+                            { type: 'heading', text: '2.3 基本操作' },
+                            { type: 'list', items: [
+                                '页面切换：点击顶部导航栏或左侧侧边栏的菜单切换页面',
+                                '数据查询：在查询页面设置查询条件，点击查询按钮查看数据',
+                                '数据导出：点击导出按钮，选择导出格式和保存位置',
+                                '图表操作：支持图表缩放、拖拽、数据点查看等操作',
+                                '表格操作：支持排序、筛选、分页等操作'
+                            ]}
+                        ]
+                    },
+                    '3': {
+                        title: '3. 数据查询',
+                        content: [
+                            { type: 'heading', text: '3.1 实时数据查询' },
+                            { type: 'paragraph', text: '实时数据查询页面可以查看当前的实时能耗数据，包括各设备的实时功率、电流、电压等参数。页面支持按设备类型、建筑、时间等条件筛选，数据每秒自动刷新。' },
+                            { type: 'heading', text: '3.2 历史数据查询' },
+                            { type: 'paragraph', text: '历史数据查询页面可以查看历史能耗数据，支持按日、周、月、年等时间维度查询。页面提供丰富的图表展示，包括折线图、柱状图、饼图等，便于数据趋势分析。' },
+                            { type: 'heading', text: '3.3 数据导出' },
+                            { type: 'paragraph', text: '查询到的数据可以导出为Excel、PDF、CSV等格式。点击导出按钮，在弹出的对话框中选择导出格式和时间范围，点击确认即可导出数据。导出的文件可以用于离线分析和存档。' }
+                        ]
+                    },
+                    '4': {
+                        title: '4. 统计分析',
+                        content: [
+                            { type: 'heading', text: '4.1 能耗分析' },
+                            { type: 'paragraph', text: '能耗分析页面提供多维度的能耗数据分析，包括能耗构成分析、能耗趋势分析、能耗对比分析等。页面支持按建筑、区域、设备类型等维度分组，便于发现能耗异常和节能潜力。' },
+                            { type: 'heading', text: '4.2 能效分析' },
+                            { type: 'paragraph', text: '能效分析页面计算和展示各类设备的能效指标，包括COP能效比、设备效率等。页面提供能效排名和对比功能，帮助用户识别低效设备，制定优化方案。' },
+                            { type: 'heading', text: '4.3 异常检测' },
+                            { type: 'paragraph', text: '异常检测页面实时监控设备运行状态，自动检测异常情况，包括能耗突增突减、设备效率下降、温度压力异常等。异常信息会以告警形式通知相关人员，便于及时处理。' },
+                            { type: 'heading', text: '4.4 报表管理' },
+                            { type: 'paragraph', text: '报表管理页面提供各类报表的生成和管理功能，包括日报表、周报表、月报表、年报表等。支持自定义报表模板，定时自动生成报表，支持多格式导出。' }
+                        ]
+                    },
+                    '5': {
+                        title: '5. 设备管理',
+                        content: [
+                            { type: 'heading', text: '5.1 设备列表' },
+                            { type: 'paragraph', text: '设备列表页面展示所有设备的基本信息，包括设备编号、名称、类型、状态等。支持设备搜索和筛选，点击设备可以查看设备详情和历史数据。' },
+                            { type: 'heading', text: '5.2 批量管控' },
+                            { type: 'paragraph', text: '批量管控页面支持对多个设备进行批量操作，包括批量开机、关机、待机等。页面提供设备选择功能，可以按设备类型、建筑等条件筛选设备，提高设备管理效率。' },
+                            { type: 'heading', text: '5.3 策略配置' },
+                            { type: 'paragraph', text: '策略配置页面可以配置设备的运行策略，包括定时策略、阈值策略、联动策略等。策略配置后系统会自动执行，实现设备智能化运行。' },
+                            { type: 'heading', text: '5.4 日志查询' },
+                            { type: 'paragraph', text: '日志查询页面记录所有设备操作日志，包括操作时间、操作人、操作内容、操作结果等。支持按时间、设备、操作人等条件查询，便于审计和问题排查。' }
+                        ]
+                    },
+                    '6': {
+                        title: '6. 区域管理',
+                        content: [
+                            { type: 'heading', text: '6.1 区域列表' },
+                            { type: 'paragraph', text: '区域列表页面展示所有区域的基本信息，包括区域代码、名称、级别等。支持区域搜索和筛选，点击区域可以查看区域详情和统计数据。' },
+                            { type: 'heading', text: '6.2 拓扑图' },
+                            { type: 'paragraph', text: '拓扑图页面以图形化方式展示区域和设备的拓扑关系，支持缩放和拖拽操作。拓扑图上显示各节点的状态和能耗数据，便于直观了解系统结构和运行状态。' },
+                            { type: 'heading', text: '6.3 能耗统计' },
+                            { type: 'paragraph', text: '能耗统计页面展示各区域的能耗统计数据，包括总能耗、电耗、水耗、气耗等。支持按时间、区域类型等条件筛选，提供图表和表格两种展示方式。' },
+                            { type: 'heading', text: '6.4 配置日志' },
+                            { type: 'paragraph', text: '配置日志页面记录所有区域配置变更操作，包括新增、编辑、删除区域等。支持按时间、区域、操作人等条件查询，便于审计和问题追溯。' }
+                        ]
+                    },
+                    '7': {
+                        title: '7. 智能问答',
+                        content: [
+                            { type: 'heading', text: '7.1 智能问答' },
+                            { type: 'paragraph', text: '智能问答页面提供AI智能问答功能，用户可以输入问题，系统会自动给出答案。页面提供快捷提问功能，点击常见问题可以快速获取答案。' },
+                            { type: 'heading', text: '7.2 常见问题库' },
+                            { type: 'paragraph', text: '常见问题库页面收集整理了系统使用和能源管理相关的常见问题和答案。支持关键词搜索，点击问题可以展开查看详细答案。' },
+                            { type: 'heading', text: '7.3 节能建议' },
+                            { type: 'paragraph', text: '节能建议页面根据用户的建筑类型、节能目标等条件，生成个性化的节能建议方案。方案包括具体的节能措施、投资预算、预期效果等信息。' },
+                            { type: 'heading', text: '7.4 操作手册' },
+                            { type: 'paragraph', text: '操作手册页面提供系统的详细操作指南，包括系统概述、快速入门、功能模块介绍等。支持目录导航和内容搜索，便于用户快速找到需要的信息。' }
+                        ]
+                    },
+                    '8': {
+                        title: '8. 系统设置',
+                        content: [
+                            { type: 'heading', text: '8.1 用户管理' },
+                            { type: 'paragraph', text: '用户管理页面管理系统用户，包括用户新增、编辑、删除、禁用等功能。支持用户角色分配，不同角色具有不同的系统权限。' },
+                            { type: 'heading', text: '8.2 权限管理' },
+                            { type: 'paragraph', text: '权限管理页面管理系统角色和权限，包括角色新增、编辑、删除，权限分配等功能。支持细粒度的权限控制，确保系统安全。' },
+                            { type: 'heading', text: '8.3 系统配置' },
+                            { type: 'paragraph', text: '系统配置页面配置系统的基本参数，包括系统名称、Logo、告警方式、数据保留时间等。系统配置需要管理员权限，修改后立即生效。' }
+                        ]
+                    }
+                });
+                
+                const currentSection = ref(manualContent['1']);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleNodeClick = (data) => {
+                    const parentId = data.id.split('-')[0];
+                    if (manualContent[parentId]) {
+                        currentSection.value = manualContent[parentId];
+                    }
+                };
+                
+                const downloadManual = () => {
+                    ElementPlus.ElMessage.success('操作手册下载成功！');
+                };
+                
+                return {
+                    defaultProps,
+                    manualTree,
+                    currentSection,
+                    isSidebarExpanded,
+                    expandSidebar,
+                    collapseSidebar,
+                    handleNodeClick,
+                    downloadManual
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+    <style>
+        .manual-toc {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .manual-content {
+            padding: 20px;
+            line-height: 1.8;
+        }
+        .content-section {
+            margin-bottom: 20px;
+        }
+        .content-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            color: #0c4e37;
+            margin: 25px 0 15px 0;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e9ecef;
+        }
+        .content-heading i {
+            color: #0c4e37;
+        }
+        .content-paragraph {
+            color: #555;
+            text-align: justify;
+            margin-bottom: 15px;
+            text-indent: 2em;
+        }
+        .content-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        .list-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            color: #555;
+        }
+        .list-item i {
+            color: #27ae60;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+        .content-tip {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 15px;
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            border-radius: 4px;
+            color: #856404;
+            margin: 15px 0;
+        }
+        .content-tip i {
+            color: #ffc107;
+            margin-top: 3px;
+            flex-shrink: 0;
+        }
+        .el-tree-node__content {
+            height: 36px;
+        }
+        .el-tree-node__label {
+            font-size: 14px;
+        }
+    </style>
+</body>
+</html>

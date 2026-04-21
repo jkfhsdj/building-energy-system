@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 全国能耗总览</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html" class="active">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="home.html" class="sidebar-item">
+                        <i class="fa fa-home"></i>
+                        <span class="sidebar-text">首页概览</span>
+                    </a>
+                    <a href="home-energy.html" class="sidebar-item active">
+                        <i class="fa fa-chart-line"></i>
+                        <span class="sidebar-text">公司能耗总览</span>
+                    </a>
+                    <a href="home-province.html" class="sidebar-item">
+                        <i class="fa fa-building"></i>
+                        <span class="sidebar-text">楼宇能耗详情</span>
+                    </a>
+                    <a href="home-device.html" class="sidebar-item">
+                        <i class="fa fa-pie-chart"></i>
+                        <span class="sidebar-text">设备分布统计</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1 class="header-title">
+                            <i class="fa fa-chart-line"></i>
+                            公司能耗总览
+                        </h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-info-card">
+                            <div class="user-info-row">
+                                <div class="card-time">
+                                    <i class="fa fa-clock"></i>
+                                    {{ currentTime }}
+                                </div>
+                            </div>
+                            <div class="user-info-row">
+                                <div class="card-user">
+                                    <i class="fa fa-user-circle"></i>
+                                    <span>管理员</span>
+                                </div>
+                                <div class="card-status">
+                                    <span class="status-dot"></span>
+                                    在线
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="top-cards">
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-bolt"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">12,456,789</div>
+                            <div class="card-label">今日总能耗 (kWh)</div>
+                        </div>
+                        <div class="card-trend up">
+                            <i class="fa fa-arrow-up"></i>
+                            <span>2.3%</span>
+                        </div>
+                    </div>
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-calendar-week"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">86,234,567</div>
+                            <div class="card-label">本周总能耗 (kWh)</div>
+                        </div>
+                        <div class="card-trend down">
+                            <i class="fa fa-arrow-down"></i>
+                            <span>1.5%</span>
+                        </div>
+                    </div>
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-calendar-alt"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">358,923,456</div>
+                            <div class="card-label">本月总能耗 (kWh)</div>
+                        </div>
+                        <div class="card-trend up">
+                            <i class="fa fa-arrow-up"></i>
+                            <span>3.8%</span>
+                        </div>
+                    </div>
+                    <div class="top-card">
+                        <div class="card-icon">
+                            <i class="fa fa-calendar"></i>
+                        </div>
+                        <div class="card-content">
+                            <div class="card-value">4,256,123,789</div>
+                            <div class="card-label">本年总能耗 (kWh)</div>
+                        </div>
+                        <div class="card-trend down">
+                            <i class="fa fa-arrow-down"></i>
+                            <span>5.2%</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-box chart-box-full">
+                    <div class="chart-title">
+                        <i class="fa fa-line-chart"></i>
+                        公司能耗趋势分析
+                    </div>
+                    <div id="trendChart" style="width: 100%; height: 400px;"></div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa fa-building"></i>
+                            各楼宇能耗汇总
+                        </div>
+                    </div>
+                    <div class="stats-grid">
+                        <div class="stat-card highlight">
+                            <i class="fa fa-building"></i>
+                            <div class="value">1,892,345</div>
+                            <div class="label">办公楼A (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-building"></i>
+                            <div class="value">1,456,789</div>
+                            <div class="label">办公楼B (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-microchip"></i>
+                            <div class="value">1,656,890</div>
+                            <div class="label">研发楼 (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-industry"></i>
+                            <div class="value">987,654</div>
+                            <div class="label">生产厂房 (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-hotel"></i>
+                            <div class="value">756,234</div>
+                            <div class="label">员工宿舍楼 (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-utensils"></i>
+                            <div class="value">423,456</div>
+                            <div class="label">食堂活动中心 (kWh)</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa fa-table"></i>
+                            能耗构成分析
+                        </div>
+                    </div>
+                    <el-table :data="energyData" class="data-table" stripe>
+                        <el-table-column prop="type" label="能源类型" width="150"></el-table-column>
+                        <el-table-column prop="today" label="今日能耗 (kWh)" width="180"></el-table-column>
+                        <el-table-column prop="week" label="本周能耗 (kWh)" width="180"></el-table-column>
+                        <el-table-column prop="month" label="本月能耗 (kWh)" width="180"></el-table-column>
+                        <el-table-column prop="ratio" label="占比" width="120">
+                            <template #default="scope">
+                                <el-progress :percentage="scope.row.ratio" :color="scope.row.color"></el-progress>
+                            </template>
+                        </el-table-column>
+                        <el-table-column prop="trend" label="趋势">
+                            <template #default="scope">
+                                <span v-if="scope.row.trend === 'up'" style="color: #e74c3c;">
+                                    <i class="fa fa-arrow-up"></i> {{ scope.row.value }}
+                                </span>
+                                <span v-else style="color: #27ae60;">
+                                    <i class="fa fa-arrow-down"></i> {{ scope.row.value }}
+                                </span>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const currentTime = ref('');
+                const isSidebarExpanded = ref(false);
+                
+                const energyData = ref([
+                    { type: '电力能耗', today: '8,456,789', week: '58,234,567', month: '245,678,901', ratio: 68, color: '#0c4e37', trend: 'up', value: '2.3%' },
+                    { type: '水耗', today: '1,234,567', week: '8,567,890', month: '36,789,012', ratio: 15, color: '#00aaff', trend: 'down', value: '1.5%' },
+                    { type: '气耗', today: '2,456,789', week: '17,123,456', month: '72,345,678', ratio: 17, color: '#f39c12', trend: 'up', value: '0.8%' }
+                ]);
+                
+                const updateTime = () => {
+                    const now = new Date();
+                    currentTime.value = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                };
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const initTrendChart = () => {
+                    const chartDom = document.getElementById('trendChart');
+                    if (!chartDom) return;
+                    
+                    const chart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: 'rgb(0, 170, 255)',
+                            textStyle: { color: '#333' }
+                        },
+                        legend: {
+                            data: ['本月能耗', '上月能耗', '去年同期'],
+                            top: 0
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            boundaryGap: false,
+                            data: ['1日', '5日', '10日', '15日', '20日', '25日', '30日'],
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: 'kWh',
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' },
+                            splitLine: { lineStyle: { color: '#f0f0f0' } }
+                        },
+                        series: [
+                            {
+                                name: '本月能耗',
+                                type: 'line',
+                                smooth: true,
+                                data: [1200000, 1320000, 1010000, 1340000, 900000, 2300000, 2100000],
+                                itemStyle: { color: 'rgb(12, 78, 55)' },
+                                lineStyle: { width: 3 },
+                                areaStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgba(12, 78, 55, 0.3)' },
+                                            { offset: 1, color: 'rgba(12, 78, 55, 0.05)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '上月能耗',
+                                type: 'line',
+                                smooth: true,
+                                data: [2200000, 1820000, 1910000, 2340000, 2900000, 3300000, 3100000],
+                                itemStyle: { color: 'rgb(0, 170, 255)' },
+                                lineStyle: { width: 3 }
+                            },
+                            {
+                                name: '去年同期',
+                                type: 'line',
+                                smooth: true,
+                                data: [1500000, 2320000, 2010000, 1540000, 1900000, 3300000, 4100000],
+                                itemStyle: { color: '#999' },
+                                lineStyle: { width: 2, type: 'dashed' }
+                            }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                };
+                
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                    initTrendChart();
+                });
+                
+                return {
+                    currentTime,
+                    energyData,
+                    isSidebarExpanded,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

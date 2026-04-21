@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 报表导出管理</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html" class="active">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="analysis.html" class="sidebar-item">
+                        <i class="fa fa-chart-bar"></i>
+                        <span class="sidebar-text">统计分析</span>
+                    </a>
+                    <a href="analysis-time.html" class="sidebar-item">
+                        <i class="fa fa-clock"></i>
+                        <span class="sidebar-text">时段汇总统计</span>
+                    </a>
+                    <a href="analysis-month.html" class="sidebar-item">
+                        <i class="fa fa-calendar-alt"></i>
+                        <span class="sidebar-text">月度能耗对比</span>
+                    </a>
+                    <a href="analysis-cop.html" class="sidebar-item">
+                        <i class="fa fa-calculator"></i>
+                        <span class="sidebar-text">COP能效分析</span>
+                    </a>
+                    <a href="analysis-report.html" class="sidebar-item active">
+                        <i class="fa fa-file-export"></i>
+                        <span class="sidebar-text">报表导出管理</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <div class="container">
+                    <h1 class="page-title">
+                        <i class="fa fa-file-export"></i>
+                        报表导出管理
+                    </h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-list"></i>
+                                导出记录
+                            </div>
+                        </div>
+                        <el-table :data="exportData" class="data-table" stripe>
+                            <el-table-column prop="id" label="记录ID" width="120"></el-table-column>
+                            <el-table-column prop="exportTime" label="导出时间" width="180"></el-table-column>
+                            <el-table-column prop="reportType" label="报表类型" width="180"></el-table-column>
+                            <el-table-column prop="fileName" label="文件名" width="250"></el-table-column>
+                            <el-table-column prop="fileSize" label="文件大小" width="120"></el-table-column>
+                            <el-table-column prop="status" label="状态">
+                                <template #default="scope">
+                                    <span class="badge" :class="scope.row.status === '成功' ? 'success' : 'warning'">
+                                        {{ scope.row.status }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="operator" label="操作人" width="120"></el-table-column>
+                            <el-table-column prop="handle" label="操作">
+                                <template #default="scope">
+                                    <el-button type="primary" size="small" @click="handleDownload(scope.row)">
+                                        <i class="fa fa-download"></i> 下载
+                                    </el-button>
+                                    <el-button type="danger" size="small" @click="handleDelete(scope.row)">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div class="pagination-wrapper">
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="50"
+                                @current-change="handlePageChange"
+                            ></el-pagination>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const exportData = ref([]);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleDownload = (row) => {
+                    ElementPlus.ElMessage.success(`正在下载：${row.fileName}`);
+                };
+                
+                const handleDelete = (row) => {
+                    ElementPlus.ElMessage.success(`删除成功：${row.fileName}`);
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const generateExportData = () => {
+                    const reportTypes = [
+                        '时段汇总统计',
+                        '月度能耗对比',
+                        'COP能效分析',
+                        '异常检测报告',
+                        '综合统计报表'
+                    ];
+                    const operators = ['张三', '李四', '王五', '赵六'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        data.push({
+                            id: `REP${String(i + 1).padStart(4, '0')}`,
+                            exportTime: date.toLocaleString(),
+                            reportType: reportTypes[Math.floor(Math.random() * reportTypes.length)],
+                            fileName: `报表_${date.getFullYear()}${String(date.getMonth() + 1).padStart(2, '0')}${String(date.getDate()).padStart(2, '0')}.xlsx`,
+                            fileSize: `${(Math.random() * 15 + 2).toFixed(2)}MB`,
+                            status: Math.random() > 0.2 ? '成功' : '失败',
+                            operator: operators[Math.floor(Math.random() * operators.length)]
+                        });
+                    }
+                    exportData.value = data;
+                };
+                
+                onMounted(() => {
+                    generateExportData();
+                });
+                
+                return {
+                    exportData,
+                    isSidebarExpanded,
+                    handleDownload,
+                    handleDelete,
+                    handlePageChange,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

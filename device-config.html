@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 设备策略配置</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html" class="active">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="device.html" class="sidebar-item">
+                        <i class="fa fa-list"></i>
+                        <span class="sidebar-text">设备列表</span>
+                    </a>
+                    <a href="device-control.html" class="sidebar-item">
+                        <i class="fa fa-sliders"></i>
+                        <span class="sidebar-text">批量管控控制</span>
+                    </a>
+                    <a href="device-config.html" class="sidebar-item active">
+                        <i class="fa fa-cogs"></i>
+                        <span class="sidebar-text">设备策略配置</span>
+                    </a>
+                    <a href="device-log.html" class="sidebar-item">
+                        <i class="fa fa-history"></i>
+                        <span class="sidebar-text">设备日志操作</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <div class="container">
+                    <h1 class="page-title">
+                        <i class="fa fa-cogs"></i>
+                        设备策略配置
+                    </h1>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-filter"></i>
+                                策略列表
+                            </div>
+                            <el-button type="primary" class="btn btn-primary" @click="showAddDialog">
+                                <i class="fa fa-plus"></i>
+                                新增策略
+                            </el-button>
+                        </div>
+                        <el-table :data="policyData" class="data-table" stripe>
+                            <el-table-column prop="id" label="策略编号" width="120"></el-table-column>
+                            <el-table-column prop="name" label="策略名称" width="200"></el-table-column>
+                            <el-table-column prop="deviceType" label="设备类型" width="120"></el-table-column>
+                            <el-table-column prop="param1" label="参数1" width="150"></el-table-column>
+                            <el-table-column prop="param2" label="参数2" width="150"></el-table-column>
+                            <el-table-column prop="param3" label="参数3" width="150"></el-table-column>
+                            <el-table-column prop="status" label="状态" width="100">
+                                <template #default="scope">
+                                    <span class="badge" :class="scope.row.status === '启用' ? 'success' : 'warning'">
+                                        {{ scope.row.status }}
+                                    </span>
+                                </template>
+                            </el-table-column>
+                            <el-table-column prop="updateTime" label="更新时间" width="150"></el-table-column>
+                            <el-table-column label="操作" width="180">
+                                <template #default="scope">
+                                    <el-button type="primary" size="small" @click="editPolicy(scope.row)">
+                                        <i class="fa fa-edit"></i> 编辑
+                                    </el-button>
+                                    <el-button type="danger" size="small" @click="deletePolicy(scope.row)">
+                                        <i class="fa fa-trash"></i> 删除
+                                    </el-button>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div class="pagination-wrapper">
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="50"
+                                @current-change="handlePageChange"
+                            ></el-pagination>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-edit"></i>
+                                策略配置表单
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label class="form-label">策略名称</label>
+                                <el-input v-model="formData.name" class="form-input" placeholder="请输入策略名称"></el-input>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">设备类型</label>
+                                <el-select v-model="formData.deviceType" class="form-select" placeholder="请选择设备类型">
+                                    <el-option label="空调系统" value="hvac"></el-option>
+                                    <el-option label="照明系统" value="lighting"></el-option>
+                                    <el-option label="电梯系统" value="elevator"></el-option>
+                                    <el-option label="水泵系统" value="pump"></el-option>
+                                </el-select>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">参数1</label>
+                                <el-input v-model="formData.param1" class="form-input" placeholder="请输入参数1"></el-input>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">参数2</label>
+                                <el-input v-model="formData.param2" class="form-input" placeholder="请输入参数2"></el-input>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">参数3</label>
+                                <el-input v-model="formData.param3" class="form-input" placeholder="请输入参数3"></el-input>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">状态</label>
+                                <el-select v-model="formData.status" class="form-select" placeholder="请选择状态">
+                                    <el-option label="启用" value="启用"></el-option>
+                                    <el-option label="禁用" value="禁用"></el-option>
+                                </el-select>
+                            </div>
+                        </div>
+                        <div class="button-group">
+                            <el-button type="primary" class="btn btn-primary" @click="savePolicy">
+                                <i class="fa fa-save"></i>
+                                保存
+                            </el-button>
+                            <el-button class="btn btn-outline" @click="resetForm">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const policyData = ref([]);
+                const isSidebarExpanded = ref(false);
+                
+                const formData = reactive({
+                    name: '',
+                    deviceType: '',
+                    param1: '',
+                    param2: '',
+                    param3: '',
+                    status: '启用'
+                });
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const showAddDialog = () => {
+                    ElementPlus.ElMessage.info('打开新增策略对话框');
+                };
+                
+                const editPolicy = (row) => {
+                    ElementPlus.ElMessage.info(`编辑策略：${row.name}`);
+                    formData.name = row.name;
+                    formData.deviceType = row.deviceType;
+                    formData.param1 = row.param1;
+                    formData.param2 = row.param2;
+                    formData.param3 = row.param3;
+                    formData.status = row.status;
+                };
+                
+                const deletePolicy = (row) => {
+                    ElementPlus.ElMessage.success(`删除策略成功：${row.name}`);
+                };
+                
+                const savePolicy = () => {
+                    if (!formData.name || !formData.deviceType) {
+                        ElementPlus.ElMessage.error('请填写必填项！');
+                        return;
+                    }
+                    ElementPlus.ElMessage.success('策略保存成功！');
+                };
+                
+                const resetForm = () => {
+                    formData.name = '';
+                    formData.deviceType = '';
+                    formData.param1 = '';
+                    formData.param2 = '';
+                    formData.param3 = '';
+                    formData.status = '启用';
+                    ElementPlus.ElMessage.info('表单已重置');
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const generatePolicyData = () => {
+                    const deviceTypes = ['空调系统', '照明系统', '电梯系统', '水泵系统'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        data.push({
+                            id: `POL${String(i + 1).padStart(3, '0')}`,
+                            name: `${deviceTypes[Math.floor(Math.random() * deviceTypes.length)]}策略-${String(i + 1).padStart(2, '0')}`,
+                            deviceType: deviceTypes[Math.floor(Math.random() * deviceTypes.length)],
+                            param1: `参数${Math.floor(Math.random() * 100)}`,
+                            param2: `参数${Math.floor(Math.random() * 100)}`,
+                            param3: `参数${Math.floor(Math.random() * 100)}`,
+                            status: Math.random() > 0.3 ? '启用' : '禁用',
+                            updateTime: new Date().toLocaleString()
+                        });
+                    }
+                    policyData.value = data;
+                };
+                
+                onMounted(() => {
+                    generatePolicyData();
+                });
+                
+                return {
+                    policyData,
+                    formData,
+                    isSidebarExpanded,
+                    showAddDialog,
+                    editPolicy,
+                    deletePolicy,
+                    savePolicy,
+                    resetForm,
+                    handlePageChange,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

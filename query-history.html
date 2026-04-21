@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 历史数据查询</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html" class="active">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="query.html" class="sidebar-item">
+                        <i class="fa fa-search"></i>
+                        <span class="sidebar-text">数据查询</span>
+                    </a>
+                    <a href="query-detail.html" class="sidebar-item">
+                        <i class="fa fa-chart-line"></i>
+                        <span class="sidebar-text">能耗明细查询</span>
+                    </a>
+                    <a href="query-trend.html" class="sidebar-item">
+                        <i class="fa fa-line-chart"></i>
+                        <span class="sidebar-text">趋势对比查询</span>
+                    </a>
+                    <a href="query-history.html" class="sidebar-item active">
+                        <i class="fa fa-history"></i>
+                        <span class="sidebar-text">历史数据查询</span>
+                    </a>
+                    <a href="query-export.html" class="sidebar-item">
+                        <i class="fa fa-file-export"></i>
+                        <span class="sidebar-text">数据导出记录</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择建筑</label>
+                            <el-select v-model="queryParams.building" size="small" placeholder="请选择建筑">
+                                <el-option label="全部建筑" value="all"></el-option>
+                                <el-option label="办公楼A" value="buildingA"></el-option>
+                                <el-option label="实验楼B" value="buildingB"></el-option>
+                                <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                <el-option label="食堂D" value="buildingD"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>开始日期</label>
+                            <el-date-picker
+                                v-model="queryParams.startDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择开始日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>结束日期</label>
+                            <el-date-picker
+                                v-model="queryParams.endDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择结束日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>数据类型</label>
+                            <el-select v-model="queryParams.dataType" size="small" placeholder="请选择数据类型">
+                                <el-option label="全部数据" value="all"></el-option>
+                                <el-option label="小时数据" value="hour"></el-option>
+                                <el-option label="日数据" value="day"></el-option>
+                                <el-option label="月数据" value="month"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleQuery">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                            <el-button size="small" @click="handleExport">
+                                <i class="fa fa-download"></i>
+                                导出
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-table"></i>
+                                历史数据
+                            </div>
+                        </div>
+                        <el-table :data="tableData" class="data-table" stripe>
+                            <el-table-column prop="date" label="日期时间" width="180"></el-table-column>
+                            <el-table-column prop="building" label="建筑名称" width="150"></el-table-column>
+                            <el-table-column prop="type" label="数据类型" width="120"></el-table-column>
+                            <el-table-column prop="total" label="总能耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="electricity" label="电耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="water" label="水耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="gas" label="气耗 (kWh)" width="150"></el-table-column>
+                        </el-table>
+                        <div class="pagination-wrapper">
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="100"
+                                @current-change="handlePageChange"
+                            ></el-pagination>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const queryParams = reactive({
+                    building: 'all',
+                    startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                    dataType: 'all'
+                });
+                
+                const showTable = ref(true);
+                const tableData = ref([]);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleQuery = () => {
+                    showTable.value = true;
+                    nextTick(() => {
+                        generateTableData();
+                    });
+                };
+                
+                const handleReset = () => {
+                    queryParams.building = 'all';
+                    queryParams.startDate = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
+                    queryParams.endDate = new Date();
+                    queryParams.dataType = 'all';
+                    showTable.value = true;
+                    nextTick(() => {
+                        generateTableData();
+                    });
+                };
+                
+                const handleExport = () => {
+                    ElementPlus.ElMessage.success('数据导出成功！');
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const generateTableData = () => {
+                    const buildings = ['办公楼A', '实验楼B', '宿舍楼C', '食堂D'];
+                    const types = ['小时数据', '日数据', '月数据'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        data.push({
+                            date: date.toLocaleString(),
+                            building: buildings[Math.floor(Math.random() * buildings.length)],
+                            type: types[Math.floor(Math.random() * types.length)],
+                            total: (Math.random() * 10000).toFixed(2),
+                            electricity: (Math.random() * 8000).toFixed(2),
+                            water: (Math.random() * 1000).toFixed(2),
+                            gas: (Math.random() * 1000).toFixed(2)
+                        });
+                    }
+                    tableData.value = data.reverse();
+                };
+                
+                onMounted(() => {
+                    nextTick(() => {
+                        generateTableData();
+                    });
+                });
+                
+                return {
+                    queryParams,
+                    showTable,
+                    tableData,
+                    isSidebarExpanded,
+                    handleQuery,
+                    handleReset,
+                    handleExport,
+                    handlePageChange,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

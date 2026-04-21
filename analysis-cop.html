@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - COP能效分析</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html" class="active">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="analysis.html" class="sidebar-item">
+                        <i class="fa fa-chart-bar"></i>
+                        <span class="sidebar-text">统计分析</span>
+                    </a>
+                    <a href="analysis-time.html" class="sidebar-item">
+                        <i class="fa fa-clock"></i>
+                        <span class="sidebar-text">时段汇总统计</span>
+                    </a>
+                    <a href="analysis-month.html" class="sidebar-item">
+                        <i class="fa fa-calendar-alt"></i>
+                        <span class="sidebar-text">月度能耗对比</span>
+                    </a>
+                    <a href="analysis-cop.html" class="sidebar-item active">
+                        <i class="fa fa-calculator"></i>
+                        <span class="sidebar-text">COP能效分析</span>
+                    </a>
+                    <a href="analysis-report.html" class="sidebar-item">
+                        <i class="fa fa-file-export"></i>
+                        <span class="sidebar-text">报表导出管理</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择建筑</label>
+                            <el-select v-model="queryParams.building" size="small" placeholder="请选择建筑">
+                                <el-option label="全部建筑" value="all"></el-option>
+                                <el-option label="办公楼A" value="buildingA"></el-option>
+                                <el-option label="实验楼B" value="buildingB"></el-option>
+                                <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                <el-option label="食堂D" value="buildingD"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>开始日期</label>
+                            <el-date-picker
+                                v-model="queryParams.startDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择开始日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>结束日期</label>
+                            <el-date-picker
+                                v-model="queryParams.endDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择结束日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>设备类型</label>
+                            <el-select v-model="queryParams.deviceType" size="small" placeholder="请选择设备类型">
+                                <el-option label="全部设备" value="all"></el-option>
+                                <el-option label="中央空调" value="hvac"></el-option>
+                                <el-option label="冷水机组" value="chiller"></el-option>
+                                <el-option label="空气处理机" value="ahu"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleQuery">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+                    <div class="module-card">
+                        <div class="module-header">
+                            <div class="module-title">
+                                <i class="fa fa-calculator"></i>
+                                COP能效分析
+                            </div>
+                            <el-button type="primary" class="btn btn-primary" @click="exportReport">
+                                <i class="fa fa-download"></i>
+                                导出报表
+                            </el-button>
+                        </div>
+                        
+                        <div class="cop-calculator">
+                            <div class="cop-formula">
+                                <h4 style="margin-bottom: 15px; color: rgb(12, 78, 55);">
+                                    <i class="fa fa-info-circle" style="margin-right: 8px; color: rgb(0, 170, 255);"></i>
+                                    COP计算公式
+                                </h4>
+                                <code>COP = 制冷量(kW) / 耗电量(kW) = 528.5 / 132.1 = 4.0</code>
+                                <p style="margin-top: 15px; color: #666; font-size: 14px;">
+                                    说明：COP值越高，表示能源利用效率越高。一般COP值在3.0-5.0之间为正常范围。
+                                </p>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">制冷量 (kW)</label>
+                                    <el-input v-model="copParams.cooling" class="form-input" placeholder="请输入制冷量"></el-input>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">耗电量 (kW)</label>
+                                    <el-input v-model="copParams.power" class="form-input" placeholder="请输入耗电量"></el-input>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">&nbsp;</label>
+                                    <el-button type="primary" class="btn btn-primary" @click="calculateCOP" style="width: 100%;">
+                                        <i class="fa fa-calculator"></i>
+                                        计算
+                                    </el-button>
+                                </div>
+                            </div>
+                            <div class="cop-result">
+                                <div class="value">{{ copResult }}</div>
+                                <div class="label">当前 COP 能效值</div>
+                            </div>
+                        </div>
+
+                        <div class="stats-grid">
+                            <div class="stat-card">
+                                <i class="fa fa-bullseye"></i>
+                                <div class="value">4.0</div>
+                                <div class="label">平均 COP 值</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fa fa-arrow-up"></i>
+                                <div class="value">4.2</div>
+                                <div class="label">最高 COP 值</div>
+                            </div>
+                            <div class="stat-card">
+                                <i class="fa fa-arrow-down"></i>
+                                <div class="value">3.8</div>
+                                <div class="label">最低 COP 值</div>
+                            </div>
+                            <div class="stat-card highlight">
+                                <i class="fa fa-check-circle"></i>
+                                <div class="value">92%</div>
+                                <div class="label">能效达标率</div>
+                            </div>
+                        </div>
+
+                        <div class="chart-box chart-box-full">
+                            <div class="chart-title">
+                                <i class="fa fa-chart-line"></i>
+                                COP趋势分析
+                            </div>
+                            <div id="copChart" style="width: 100%; height: 350px;"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const queryParams = reactive({
+                    building: 'all',
+                    startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                    deviceType: 'all'
+                });
+                
+                const copParams = reactive({
+                    cooling: 528.5,
+                    power: 132.1
+                });
+                
+                const copResult = ref(4.0);
+                const showAnalysis = ref(true);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleQuery = () => {
+                    showAnalysis.value = true;
+                    nextTick(() => {
+                        initCopChart();
+                    });
+                };
+                
+                const handleReset = () => {
+                    queryParams.building = 'all';
+                    queryParams.startDate = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
+                    queryParams.endDate = new Date();
+                    queryParams.deviceType = 'all';
+                    showAnalysis.value = true;
+                    nextTick(() => {
+                        initCopChart();
+                    });
+                };
+                
+                const calculateCOP = () => {
+                    if (copParams.power > 0) {
+                        copResult.value = (copParams.cooling / copParams.power).toFixed(2);
+                        ElementPlus.ElMessage.success('COP计算完成！');
+                    } else {
+                        ElementPlus.ElMessage.error('耗电量必须大于0！');
+                    }
+                };
+                
+                const exportReport = () => {
+                    ElementPlus.ElMessage.success('COP能效分析报表导出成功！');
+                };
+                
+                onMounted(() => {
+                    nextTick(() => {
+                        initCopChart();
+                    });
+                });
+                
+                return {
+                    queryParams,
+                    copParams,
+                    copResult,
+                    showAnalysis,
+                    isSidebarExpanded,
+                    handleQuery,
+                    handleReset,
+                    calculateCOP,
+                    exportReport,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+
+        function initCopChart() {
+            const chartDom = document.getElementById('copChart');
+            if (!chartDom) return;
+            
+            const chart = echarts.init(chartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: 'rgb(0, 170, 255)',
+                    textStyle: { color: '#333' }
+                },
+                legend: {
+                    data: ['COP值', '标准线'],
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'COP',
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' },
+                    splitLine: { lineStyle: { color: '#f0f0f0' } },
+                    min: 0,
+                    max: 6
+                },
+                series: [
+                    {
+                        name: 'COP值',
+                        type: 'line',
+                        smooth: true,
+                        data: [3.8, 3.9, 4.0, 3.95, 4.1, 4.2, 4.15, 4.0, 3.9, 3.95, 4.0, 3.95],
+                        lineStyle: {
+                            color: 'rgb(0, 170, 255)',
+                            width: 4
+                        },
+                        itemStyle: {
+                            color: 'rgb(0, 170, 255)'
+                        },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(0, 170, 255, 0.3)' },
+                                    { offset: 1, color: 'rgba(0, 170, 255, 0.05)' }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        name: '标准线',
+                        type: 'line',
+                        smooth: false,
+                        data: [4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0, 4.0],
+                        lineStyle: {
+                            color: '#e74c3c',
+                            width: 2,
+                            type: 'dashed'
+                        }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
+</body>
+</html>

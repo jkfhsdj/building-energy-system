@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 月度能耗对比</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html" class="active">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="analysis.html" class="sidebar-item">
+                        <i class="fa fa-chart-bar"></i>
+                        <span class="sidebar-text">统计分析</span>
+                    </a>
+                    <a href="analysis-time.html" class="sidebar-item">
+                        <i class="fa fa-clock"></i>
+                        <span class="sidebar-text">时段汇总统计</span>
+                    </a>
+                    <a href="analysis-month.html" class="sidebar-item active">
+                        <i class="fa fa-calendar-alt"></i>
+                        <span class="sidebar-text">月度能耗对比</span>
+                    </a>
+                    <a href="analysis-cop.html" class="sidebar-item">
+                        <i class="fa fa-calculator"></i>
+                        <span class="sidebar-text">COP能效分析</span>
+                    </a>
+                    <a href="analysis-report.html" class="sidebar-item">
+                        <i class="fa fa-file-export"></i>
+                        <span class="sidebar-text">报表导出管理</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择建筑</label>
+                            <el-select v-model="queryParams.building" size="small" placeholder="请选择建筑">
+                                <el-option label="全部建筑" value="all"></el-option>
+                                <el-option label="办公楼A" value="buildingA"></el-option>
+                                <el-option label="实验楼B" value="buildingB"></el-option>
+                                <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                <el-option label="食堂D" value="buildingD"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>对比年份</label>
+                            <el-select v-model="queryParams.year" size="small" placeholder="请选择年份">
+                                <el-option label="2024年" value="2024"></el-option>
+                                <el-option label="2023年" value="2023"></el-option>
+                                <el-option label="2022年" value="2022"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>指标选择</label>
+                            <el-select v-model="queryParams.metric" size="small" placeholder="请选择指标">
+                                <el-option label="总能耗" value="total"></el-option>
+                                <el-option label="电耗" value="electricity"></el-option>
+                                <el-option label="水耗" value="water"></el-option>
+                                <el-option label="气耗" value="gas"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleQuery">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+                    <div class="chart-box chart-box-full">
+                        <div class="chart-title">
+                            <i class="fa fa-chart-bar"></i>
+                            月度能耗对比图
+                        </div>
+                        <div id="monthlyCompareChart" style="width: 100%; height: 400px;"></div>
+                    </div>
+                    
+                    <div class="chart-box chart-box-full">
+                        <div class="chart-title">
+                            <i class="fa fa-tachometer-alt"></i>
+                            各仪表类型月度对比
+                        </div>
+                        <div id="meterTypeMonthChart" style="width: 100%; height: 350px;"></div>
+                    </div>
+                    
+                    <div class="chart-box chart-box-full">
+                        <div class="chart-title">
+                            <i class="fa fa-building"></i>
+                            各楼宇/部门月度使用量
+                        </div>
+                        <div id="industryChart" style="width: 100%; height: 350px;"></div>
+                    </div>
+                    
+                    <!-- 长期能耗预测 -->
+                    <div class="module-card" style="margin-top: 25px;">
+                        <div class="module-header">
+                            <div class="module-title">
+                                <i class="fa fa-chart-line"></i>
+                                长期能耗预测
+                            </div>
+                        </div>
+                        <div class="chart-box chart-box-full">
+                            <div class="chart-title">
+                                <i class="fa fa-calendar-alt"></i>
+                                长期能耗趋势预测模型（一）
+                            </div>
+                            <img src="./figures/pred_longterm1.png" style="width: 100%; max-width: 1000px; height: auto; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                        </div>
+                        
+                        <div class="chart-box chart-box-full" style="margin-top: 20px;">
+                            <div class="chart-title">
+                                <i class="fa fa-calendar-alt"></i>
+                                长期能耗趋势预测模型（二）
+                            </div>
+                            <img src="./figures/pred_longterm2.png" style="width: 100%; max-width: 1000px; height: auto; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                        </div>
+                        
+                        <div class="chart-box chart-box-full" style="margin-top: 20px;">
+                            <div class="chart-title">
+                                <i class="fa fa-cut"></i>
+                                长期预测模型数据分解
+                            </div>
+                            <img src="./figures/split_longterm.png" style="width: 100%; height: auto; max-height: 420px; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                        </div>
+                    </div>
+                    
+                    <!-- 月度仪表详细分析 -->
+                    <div class="module-card" style="margin-top: 25px;">
+                        <div class="module-header">
+                            <div class="module-title">
+                                <i class="fa fa-calendar"></i>
+                                月度仪表数据分析
+                            </div>
+                        </div>
+                        
+                        <div class="chart-box chart-box-full">
+                            <div class="chart-title">
+                                <i class="fa fa-calendar-check"></i>
+                                月度能耗统计概览
+                            </div>
+                            <img src="./figures/meters_month.png" style="width: 100%; height: auto; max-height: 420px; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                        </div>
+                        
+                        <div class="chart-box chart-box-full" style="margin-top: 20px;">
+                            <div class="chart-title">
+                                <i class="fa fa-tachometer"></i>
+                                分仪表类型月度能耗对比
+                            </div>
+                            <img src="./figures/meters_month_metertype.png" style="width: 100%; height: auto; max-height: 420px; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                        </div>
+                        
+                        <div class="chart-box chart-box-full" style="margin-top: 20px;">
+                            <div class="chart-title">
+                                <i class="fa fa-chart-area"></i>
+                                月度能耗使用量分布
+                            </div>
+                            <img src="./figures/meters_month_usage.png" style="width: 100%; height: auto; max-height: 650px; display: block; margin: 0 auto; object-fit: contain; border-radius: 8px;">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const queryParams = reactive({
+                    building: 'all',
+                    year: '2024',
+                    metric: 'total'
+                });
+                
+                const showChart = ref(true);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleQuery = () => {
+                    showChart.value = true;
+                    nextTick(() => {
+                        initMonthlyCompareChart();
+                    });
+                };
+                
+                const handleReset = () => {
+                    queryParams.building = 'all';
+                    queryParams.year = '2024';
+                    queryParams.metric = 'total';
+                    showChart.value = true;
+                    nextTick(() => {
+                        initMonthlyCompareChart();
+                    });
+                };
+                
+                onMounted(() => {
+                    nextTick(() => {
+                        initMonthlyCompareChart();
+                        initMeterTypeMonthChart();
+                        initIndustryChart();
+                    });
+                });
+                
+                return {
+                    queryParams,
+                    showChart,
+                    isSidebarExpanded,
+                    handleQuery,
+                    handleReset,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+
+        function initMonthlyCompareChart() {
+            const chartDom = document.getElementById('monthlyCompareChart');
+            if (!chartDom) return;
+            
+            const chart = echarts.init(chartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#38A169',
+                    textStyle: { color: '#333' }
+                },
+                legend: {
+                    data: ['2024年', '2023年'],
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'kWh',
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' },
+                    splitLine: { lineStyle: { color: '#f0f0f0' } }
+                },
+                series: [
+                    {
+                        name: '2024年',
+                        type: 'bar',
+                        data: [65000, 58000, 68932, 62000, 55000, 48000, 52000, 55000, 50000, 58000, 62000, 68000],
+                        itemStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: '#38A169' },
+                                    { offset: 1, color: '#276749' }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        name: '2023年',
+                        type: 'bar',
+                        data: [72000, 65000, 75000, 68000, 60000, 52000, 56000, 60000, 55000, 63000, 68000, 75000],
+                        itemStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: '#68D391' },
+                                    { offset: 1, color: '#38A169' }
+                                ]
+                            }
+                        }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        function initMeterTypeMonthChart() {
+            const chartDom = document.getElementById('meterTypeMonthChart');
+            if (!chartDom) return;
+            
+            const chart = echarts.init(chartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#38A169'
+                },
+                legend: {
+                    data: ['电表', '水表', '气表', '热能表'],
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'kWh',
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' },
+                    splitLine: { lineStyle: { color: '#f0f0f0' } }
+                },
+                series: [
+                    {
+                        name: '电表',
+                        type: 'line',
+                        smooth: true,
+                        data: [45000, 42000, 48000, 44000, 40000, 35000, 38000, 40000, 38000, 42000, 45000, 48000],
+                        lineStyle: { color: '#38A169', width: 3 },
+                        itemStyle: { color: '#38A169' }
+                    },
+                    {
+                        name: '水表',
+                        type: 'line',
+                        smooth: true,
+                        data: [28000, 26000, 30000, 27000, 25000, 22000, 24000, 25000, 24000, 26000, 28000, 30000],
+                        lineStyle: { color: '#68D391', width: 3 },
+                        itemStyle: { color: '#68D391' }
+                    },
+                    {
+                        name: '气表',
+                        type: 'line',
+                        smooth: true,
+                        data: [18000, 16000, 19000, 17000, 15000, 13000, 14000, 15000, 14500, 15500, 17000, 18500],
+                        lineStyle: { color: '#2F855A', width: 3 },
+                        itemStyle: { color: '#2F855A' }
+                    },
+                    {
+                        name: '热能表',
+                        type: 'line',
+                        smooth: true,
+                        data: [9000, 8500, 9500, 8800, 8000, 7000, 7500, 8000, 7800, 8200, 8700, 9200],
+                        lineStyle: { color: '#48BB78', width: 3 },
+                        itemStyle: { color: '#48BB78' }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+        
+        function initIndustryChart() {
+            const chartDom = document.getElementById('industryChart');
+            if (!chartDom) return;
+            
+            const chart = echarts.init(chartDom);
+            const industries = ['办公楼A', '办公楼B', '研发楼', '生产厂房', '员工宿舍楼', '食堂活动中心', '仓储中心'];
+            
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: '#38A169',
+                    axisPointer: { type: 'shadow' }
+                },
+                legend: {
+                    data: ['1月', '2月', '3月', '4月'],
+                    top: 0
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    data: industries,
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666', rotate: 15 }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'kWh',
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' },
+                    splitLine: { lineStyle: { color: '#f0f0f0' } }
+                },
+                series: [
+                    {
+                        name: '1月',
+                        type: 'bar',
+                        data: [58000, 72000, 45000, 85000, 92000, 38000, 65000],
+                        itemStyle: { color: '#38A169' }
+                    },
+                    {
+                        name: '2月',
+                        type: 'bar',
+                        data: [52000, 65000, 40000, 78000, 88000, 35000, 58000],
+                        itemStyle: { color: '#68D391' }
+                    },
+                    {
+                        name: '3月',
+                        type: 'bar',
+                        data: [60000, 75000, 48000, 88000, 95000, 40000, 68000],
+                        itemStyle: { color: '#2F855A' }
+                    },
+                    {
+                        name: '4月',
+                        type: 'bar',
+                        data: [55000, 70000, 42000, 82000, 90000, 36000, 62000],
+                        itemStyle: { color: '#48BB78' }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
+</body>
+</html>

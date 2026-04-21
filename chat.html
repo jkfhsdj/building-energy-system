@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 智能问答</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html" class="active">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="chat.html" class="sidebar-item active">
+                        <i class="fa fa-robot"></i>
+                        <span class="sidebar-text">智能问答</span>
+                    </a>
+                    <a href="chat-faq.html" class="sidebar-item">
+                        <i class="fa fa-question-circle"></i>
+                        <span class="sidebar-text">常见问题库</span>
+                    </a>
+                    <a href="chat-suggest.html" class="sidebar-item">
+                        <i class="fa fa-lightbulb-o"></i>
+                        <span class="sidebar-text">节能建议咨询</span>
+                    </a>
+                    <a href="chat-manual.html" class="sidebar-item">
+                        <i class="fa fa-book"></i>
+                        <span class="sidebar-text">系统操作手册</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <div class="container">
+            <h1 class="page-title">
+                <i class="fa fa-robot"></i>
+                智能问答
+            </h1>
+
+            <div class="chat-container">
+                <div class="chat-sidebar">
+                    <h3><i class="fa fa-lightbulb" style="margin-right: 8px;"></i>快捷提问</h3>
+                    <div class="quick-questions">
+                        <div class="quick-question" @click="askQuestion('如何降低建筑能耗？')">
+                            如何降低建筑能耗？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('什么是COP能效比？')">
+                            什么是COP能效比？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('空调系统如何节能？')">
+                            空调系统如何节能？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('如何进行异常检测？')">
+                            如何进行异常检测？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('能源管理系统有哪些功能？')">
+                            能源管理系统有哪些功能？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('如何提高设备运行效率？')">
+                            如何提高设备运行效率？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('建筑节能有哪些措施？')">
+                            建筑节能有哪些措施？
+                        </div>
+                        <div class="quick-question" @click="askQuestion('数据分析在能源管理中的应用？')">
+                            数据分析在能源管理中的应用？
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chat-main">
+                    <div class="chat-messages" ref="chatMessages">
+                        <div class="message assistant">
+                            <div class="message-avatar">
+                                <i class="fa fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                您好！我是建筑能源智能管理系统的AI助手，很高兴为您服务。我可以帮您解答能源管理相关的问题，包括能耗分析、设备优化、异常处理、节能建议等。请问有什么可以帮助您的？
+                            </div>
+                        </div>
+                        <div v-for="(message, index) in messages" :key="index" :class="['message', message.role]">
+                            <div class="message-avatar">
+                                <i :class="message.role === 'user' ? 'fa fa-user' : 'fa fa-robot'"></i>
+                            </div>
+                            <div class="message-content">
+                                {{ message.content }}
+                            </div>
+                        </div>
+                        <div v-if="isLoading" class="message assistant">
+                            <div class="message-avatar">
+                                <i class="fa fa-robot"></i>
+                            </div>
+                            <div class="message-content">
+                                <div class="loading"></div>
+                                <span style="margin-left: 10px;">正在思考中...</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="chat-input-area">
+                        <el-input
+                            v-model="inputMessage"
+                            type="textarea"
+                            class="chat-input"
+                            placeholder="请输入您的问题..."
+                            @keydown.enter.exact="sendMessage"
+                            @keydown.enter.shift.exact="newLine"
+                        ></el-input>
+                        <el-button type="primary" class="btn btn-primary" @click="sendMessage">
+                            <i class="fa fa-paper-plane"></i>
+                            发送
+                        </el-button>
+                    </div>
+                </div>
+            </div>
+        </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script>
+        const { createApp, ref, nextTick } = Vue;
+        
+        createApp({
+            setup() {
+                const messages = ref([]);
+                const inputMessage = ref('');
+                const isLoading = ref(false);
+                const chatMessages = ref(null);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const responses = {
+                    '如何降低建筑能耗？': `建筑能耗降低可以从以下几个方面入手：
+
+1. **设备优化**：
+   - 定期维护空调、照明、电梯等设备，确保高效运行
+   - 更换老旧设备，选用节能型产品
+   - 优化设备运行参数，如空调温度设置在26℃左右
+
+2. **智能控制**：
+   - 安装智能照明系统，实现人来灯亮、人走灯灭
+   - 使用空调智能控制系统，根据人流量自动调节
+   - 建立设备联动机制，避免能源浪费
+
+3. **行为节能**：
+   - 加强员工节能意识培训
+   - 制定节能管理制度
+   - 设立节能奖励机制
+
+4. **技术升级**：
+   - 安装光伏板，利用太阳能发电
+   - 采用地源热泵等新能源技术
+   - 建设能源管理系统，实现精细化管理
+
+建议您先从数据分析入手，了解当前能耗分布特点，然后制定针对性的节能方案。`,
+                    
+                    '什么是COP能效比？': `COP（Coefficient of Performance）即性能系数，是衡量制冷设备能效的重要指标。
+
+**计算公式：**
+COP = 制冷量(kW) / 耗电量(kW)
+
+**意义说明：**
+- COP值越高，表示能源利用效率越高
+- 一般COP值在3.0-5.0之间为正常范围
+- COP值每提高0.1，可节能约3%
+
+**影响因素：**
+1. 设备类型和品牌
+2. 运行工况（温度、湿度、负荷率）
+3. 维护保养状况
+4. 使用年限
+
+**优化建议：**
+- 选择高COP值的设备
+- 合理设定运行参数
+- 定期清洗换热器
+- 避免设备频繁启停
+
+您可以在统计分析页面查看详细的COP趋势分析。`,
+                    
+                    '空调系统如何节能？': `空调系统节能可以采取以下措施：
+
+1. **温度设置优化**：
+   - 夏季制冷：26-28℃
+   - 冬季制热：18-20℃
+   - 每调高1℃，可节能6-8%
+
+2. **运行策略优化**：
+   - 提前30分钟开启空调
+   - 下班后及时关闭
+   - 避免频繁启停
+
+3. **设备维护**：
+   - 定期清洗过滤网（每2周一次）
+   - 定期清洗换热器（每季度一次）
+   - 检查制冷剂是否充足
+
+4. **系统优化**：
+   - 采用变频技术
+   - 安装智能控制系统
+   - 优化风道设计，减少阻力
+
+5. **辅助措施**：
+   - 安装遮阳设施，减少太阳辐射
+   - 加强建筑保温
+   - 利用新风系统，在过渡季节自然冷却
+
+建议您通过数据分析，找出空调系统的能耗高峰，制定针对性的优化方案。`,
+                    
+                    '如何进行异常检测？': `能源系统异常检测的方法和步骤：
+
+**检测方法：**
+1. **阈值检测**：设定正常范围，超出即报警
+2. **趋势分析**：对比历史数据，发现异常变化
+3. **模式识别**：识别异常运行模式
+4. **关联分析**：分析设备间关联关系
+
+**检测步骤：**
+1. 数据采集：实时采集能耗数据
+2. 数据预处理：清洗、去噪、归一化
+3. 特征提取：提取关键特征指标
+4. 异常识别：使用算法识别异常
+5. 异常分类：分类异常类型和级别
+6. 异常处理：生成处理建议
+
+**常见异常类型：**
+- 能耗突增突减
+- 设备效率下降
+- 温度、压力异常
+- 设备频繁启停
+
+您可以在统计分析页面查看异常检测详情和处理记录。`,
+                    
+                    '能源管理系统有哪些功能？': `建筑能源智能管理系统主要功能包括：
+
+1. **数据采集与监控**：
+   - 实时采集电、水、气等能耗数据
+   - 监控设备运行状态
+   - 7×24小时不间断监控
+
+2. **数据分析与统计**：
+   - 多维度数据分析
+   - 同比、环比分析
+   - 能耗趋势分析
+
+3. **能效评估与优化**：
+   - COP能效计算
+   - 能效排名和对比
+   - 节能潜力分析
+
+4. **异常检测与告警**：
+   - 实时异常检测
+   - 多渠道告警通知
+   - 异常处理跟踪
+
+5. **报表管理**：
+   - 自定义报表生成
+   - 多格式导出
+   - 报表定时推送
+
+6. **设备管理**：
+   - 设备台账管理
+   - 维护保养记录
+   - 设备寿命分析
+
+7. **移动端应用**：
+   - 移动端数据查询
+   - 移动端告警接收
+   - 移动端审批处理
+
+系统支持模块化部署，可根据实际需求选择功能模块。`,
+                    
+                    '如何提高设备运行效率？': `提高设备运行效率的方法：
+
+1. **定期维护保养**：
+   - 制定维护保养计划
+   - 定期清洁、润滑、紧固
+   - 及时更换老化部件
+
+2. **优化运行参数**：
+   - 根据负荷调整运行参数
+   - 避免设备超负荷运行
+   - 避免设备空载运行
+
+3. **设备升级改造**：
+   - 更换高效节能设备
+   - 加装变频器等节能装置
+   - 优化控制系统
+
+4. **运行管理优化**：
+   - 合理安排设备运行时间
+   - 避免设备频繁启停
+   - 建立设备运行档案
+
+5. **人员培训**：
+   - 加强操作人员培训
+   - 规范操作流程
+   - 建立考核机制
+
+**预期效果：**
+- 设备效率提升10-30%
+- 使用寿命延长20-50%
+- 维护成本降低15-25%
+
+建议您先进行设备普查，了解设备现状，然后制定针对性的优化方案。`,
+                    
+                    '建筑节能有哪些措施？': `建筑节能措施可以从以下几个方面考虑：
+
+1. **建筑围护结构节能**：
+   - 加强外墙保温
+   - 使用节能门窗
+   - 屋面保温隔热
+
+2. **空调系统节能**：
+   - 选用高效空调设备
+   - 优化空调运行策略
+   - 定期维护保养
+
+3. **照明系统节能**：
+   - 使用LED等节能光源
+   - 安装智能照明控制系统
+   - 充分利用自然光
+
+4. **电梯系统节能**：
+   - 选用节能电梯
+   - 优化电梯调度
+   - 安装能量回馈装置
+
+5. **给排水系统节能**：
+   - 使用节水器具
+   - 安装中水回用系统
+   - 优化供水压力
+
+6. **新能源利用**：
+   - 安装太阳能光伏系统
+   - 利用地源热泵
+   - 采用生物质能
+
+7. **智能管理**：
+   - 建设能源管理系统
+   - 实施精细化管理
+   - 数据驱动决策
+
+**节能效果：**
+综合节能率可达20-40%，投资回收期一般为3-5年。`,
+                    
+                    '数据分析在能源管理中的应用？': `数据分析在能源管理中的应用：
+
+1. **能耗分析**：
+   - 能耗构成分析
+   - 能耗趋势分析
+   - 能耗对比分析
+
+2. **能效分析**：
+   - 设备能效分析
+   - 系统能效分析
+   - 建筑能效分析
+
+3. **异常检测**：
+   - 能耗异常检测
+   - 设备异常检测
+   - 系统异常检测
+
+4. **预测分析**：
+   - 能耗预测
+   - 需求预测
+   - 故障预测
+
+5. **优化分析**：
+   - 运行参数优化
+   - 设备调度优化
+   - 系统配置优化
+
+6. **成本分析**：
+   - 能源成本分析
+   - 维护成本分析
+   - 投资回报分析
+
+**数据分析技术：**
+- 统计分析
+- 机器学习
+- 深度学习
+- 数据挖掘
+
+通过数据分析，可以发现节能潜力，优化运行策略，降低能源成本，提高管理水平。`
+                };
+                
+                const askQuestion = (question) => {
+                    inputMessage.value = question;
+                    sendMessage();
+                };
+                
+                const sendMessage = () => {
+                    if (!inputMessage.value.trim()) return;
+                    
+                    messages.value.push({
+                        role: 'user',
+                        content: inputMessage.value
+                    });
+                    
+                    const question = inputMessage.value;
+                    inputMessage.value = '';
+                    isLoading.value = true;
+                    
+                    nextTick(() => {
+                        scrollToBottom();
+                    });
+                    
+                    setTimeout(() => {
+                        let response = responses[question];
+                        if (!response) {
+                            response = `感谢您的提问！关于"${question}"这个问题，我需要查阅更多资料。
+
+建议您可以：
+1. 查看系统中的数据查询和统计分析功能，了解详细的能耗数据
+2. 在快捷提问中选择相关问题
+3. 联系我们的专业工程师获取详细解答
+
+您也可以尝试提问其他问题，我会尽力为您解答！`;
+                        }
+                        
+                        messages.value.push({
+                            role: 'assistant',
+                            content: response
+                        });
+                        
+                        isLoading.value = false;
+                        nextTick(() => {
+                            scrollToBottom();
+                        });
+                    }, 1000 + Math.random() * 1000);
+                };
+                
+                const newLine = () => {
+                    inputMessage.value += '\n';
+                };
+                
+                const scrollToBottom = () => {
+                    if (chatMessages.value) {
+                        chatMessages.value.scrollTop = chatMessages.value.scrollHeight;
+                    }
+                };
+                
+                return {
+                    messages,
+                    inputMessage,
+                    isLoading,
+                    chatMessages,
+                    isSidebarExpanded,
+                    askQuestion,
+                    sendMessage,
+                    newLine,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

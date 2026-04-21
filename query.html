@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 数据查询</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+
+<a href="query.html" class="active">数据查询</a>
+
+<a href="analysis.html">统计分析</a>
+
+<a href="device.html">设备管理</a>
+
+<a href="area.html">区域管理</a>
+
+<a href="chat.html">AI问答</a>
+
+</div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">能源管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="query.html" class="sidebar-item active">
+                        <i class="fa fa-search"></i>
+                        <span class="sidebar-text">数据查询</span>
+                    </a>
+                    <a href="query-detail.html" class="sidebar-item">
+                        <i class="fa fa-chart-line"></i>
+                        <span class="sidebar-text">能耗明细查询</span>
+                    </a>
+                    <a href="query-trend.html" class="sidebar-item">
+                        <i class="fa fa-line-chart"></i>
+                        <span class="sidebar-text">趋势对比查询</span>
+                    </a>
+                    <a href="query-history.html" class="sidebar-item">
+                        <i class="fa fa-history"></i>
+                        <span class="sidebar-text">历史数据查询</span>
+                    </a>
+                    <a href="query-export.html" class="sidebar-item">
+                        <i class="fa fa-file-export"></i>
+                        <span class="sidebar-text">数据导出记录</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择建筑</label>
+                            <el-select v-model="queryParams.building" size="small" placeholder="请选择建筑">
+                                <el-option label="全部建筑" value="all"></el-option>
+                                <el-option label="办公楼A" value="buildingA"></el-option>
+                                <el-option label="实验楼B" value="buildingB"></el-option>
+                                <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                <el-option label="食堂D" value="buildingD"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>开始日期</label>
+                            <el-date-picker
+                                v-model="queryParams.startDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择开始日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>结束日期</label>
+                            <el-date-picker
+                                v-model="queryParams.endDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择结束日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>指标选择</label>
+                            <el-select v-model="queryParams.metric" size="small" placeholder="请选择指标">
+                                <el-option label="总能耗" value="total"></el-option>
+                                <el-option label="电耗" value="electricity"></el-option>
+                                <el-option label="水耗" value="water"></el-option>
+                                <el-option label="气耗" value="gas"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleQuery">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                            <el-button size="small" @click="handleExport">
+                                <i class="fa fa-download"></i>
+                                导出
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+    
+
+                        <div class="chart-box chart-box-full" v-if="showChart">
+                            <div class="chart-title">
+                                <i class="fa fa-chart-line"></i>
+                                能耗趋势图
+                            </div>
+                            <div id="queryChart" style="width: 100%; height: 400px;"></div>
+                        </div>
+
+                        <div class="card" v-if="showTable">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-table"></i>
+                                    数据明细
+                                </div>
+                            </div>
+                            <el-table :data="tableData" class="data-table" stripe>
+                                <el-table-column prop="date" label="日期" width="120"></el-table-column>
+                                <el-table-column prop="building" label="建筑名称" width="150"></el-table-column>
+                                <el-table-column prop="metric" label="指标类型" width="120"></el-table-column>
+                                <el-table-column prop="value" label="数值 (kWh)" width="150"></el-table-column>
+                                <el-table-column prop="trend" label="趋势">
+                                    <template #default="scope">
+                                        <span v-if="scope.row.trend === 'up'" style="color: #e74c3c;">
+                                            <i class="fa fa-arrow-up"></i> 上升
+                                        </span>
+                                        <span v-else style="color: #27ae60;">
+                                            <i class="fa fa-arrow-down"></i> 下降
+                                        </span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="status" label="状态">
+                                    <template #default="scope">
+                                        <span class="badge" :class="scope.row.status === '正常' ? 'success' : 'warning'">
+                                            {{ scope.row.status }}
+                                        </span>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            <div class="pagination-wrapper">
+                                <el-pagination
+                                    background
+                                    layout="prev, pager, next"
+                                    :total="100"
+                                    @current-change="handlePageChange"
+                                ></el-pagination>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 能耗明细查询 -->
+                    <template v-if="currentView === 'detail'">
+                        <h1 class="page-title">
+                            <i class="fa fa-chart-line"></i>
+                            能耗明细查询
+                        </h1>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-filter"></i>
+                                    查询条件
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">选择建筑</label>
+                                    <el-select v-model="detailParams.building" class="form-select" placeholder="请选择建筑">
+                                        <el-option label="全部建筑" value="all"></el-option>
+                                        <el-option label="办公楼A" value="buildingA"></el-option>
+                                        <el-option label="实验楼B" value="buildingB"></el-option>
+                                        <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                        <el-option label="食堂D" value="buildingD"></el-option>
+                                    </el-select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">开始日期</label>
+                                    <el-date-picker
+                                        v-model="detailParams.startDate"
+                                        type="date"
+                                        placeholder="选择开始日期"
+                                        class="form-input"
+                                    ></el-date-picker>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">结束日期</label>
+                                    <el-date-picker
+                                        v-model="detailParams.endDate"
+                                        type="date"
+                                        placeholder="选择结束日期"
+                                        class="form-input"
+                                    ></el-date-picker>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">设备类型</label>
+                                    <el-select v-model="detailParams.deviceType" class="form-select" placeholder="请选择设备类型">
+                                        <el-option label="全部设备" value="all"></el-option>
+                                        <el-option label="空调系统" value="hvac"></el-option>
+                                        <el-option label="照明系统" value="lighting"></el-option>
+                                        <el-option label="电梯系统" value="elevator"></el-option>
+                                        <el-option label="水泵系统" value="pump"></el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <el-button type="primary" class="btn btn-primary" @click="handleDetailQuery">
+                                    <i class="fa fa-search"></i>
+                                    查询
+                                </el-button>
+                                <el-button class="btn btn-outline" @click="handleDetailReset">
+                                    <i class="fa fa-redo"></i>
+                                    重置
+                                </el-button>
+                            </div>
+                        </div>
+
+                        <div class="card" v-if="showDetailTable">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-table"></i>
+                                    能耗明细
+                                </div>
+                            </div>
+                            <el-table :data="detailTableData" class="data-table" stripe>
+                                <el-table-column prop="date" label="日期" width="120"></el-table-column>
+                                <el-table-column prop="building" label="建筑名称" width="150"></el-table-column>
+                                <el-table-column prop="device" label="设备名称" width="180"></el-table-column>
+                                <el-table-column prop="type" label="设备类型" width="120"></el-table-column>
+                                <el-table-column prop="energy" label="能耗值 (kWh)" width="150"></el-table-column>
+                                <el-table-column prop="trend" label="趋势">
+                                    <template #default="scope">
+                                        <span v-if="scope.row.trend === 'up'" style="color: #e74c3c;">
+                                            <i class="fa fa-arrow-up"></i> 上升
+                                        </span>
+                                        <span v-else style="color: #27ae60;">
+                                            <i class="fa fa-arrow-down"></i> 下降
+                                        </span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="status" label="状态">
+                                    <template #default="scope">
+                                        <span class="badge" :class="scope.row.status === '正常' ? 'success' : 'warning'">
+                                            {{ scope.row.status }}
+                                        </span>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            <div class="pagination-wrapper">
+                                <el-pagination
+                                    background
+                                    layout="prev, pager, next"
+                                    :total="100"
+                                    @current-change="handleDetailPageChange"
+                                ></el-pagination>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 趋势对比查询 -->
+                    <template v-if="currentView === 'trend'">
+                        <h1 class="page-title">
+                            <i class="fa fa-line-chart"></i>
+                            趋势对比查询
+                        </h1>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-filter"></i>
+                                    查询条件
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">对比类型</label>
+                                    <el-select v-model="trendParams.compareType" class="form-select" placeholder="请选择对比类型">
+                                        <el-option label="多建筑对比" value="building"></el-option>
+                                        <el-option label="多时段对比" value="time"></el-option>
+                                    </el-select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">开始日期</label>
+                                    <el-date-picker
+                                        v-model="trendParams.startDate"
+                                        type="date"
+                                        placeholder="选择开始日期"
+                                        class="form-input"
+                                    ></el-date-picker>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">结束日期</label>
+                                    <el-date-picker
+                                        v-model="trendParams.endDate"
+                                        type="date"
+                                        placeholder="选择结束日期"
+                                        class="form-input"
+                                    ></el-date-picker>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">指标选择</label>
+                                    <el-select v-model="trendParams.metric" class="form-select" placeholder="请选择指标">
+                                        <el-option label="总能耗" value="total"></el-option>
+                                        <el-option label="电耗" value="electricity"></el-option>
+                                        <el-option label="水耗" value="water"></el-option>
+                                        <el-option label="气耗" value="gas"></el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <el-button type="primary" class="btn btn-primary" @click="handleTrendQuery">
+                                    <i class="fa fa-search"></i>
+                                    查询
+                                </el-button>
+                                <el-button class="btn btn-outline" @click="handleTrendReset">
+                                    <i class="fa fa-redo"></i>
+                                    重置
+                                </el-button>
+                            </div>
+                        </div>
+
+                        <div class="chart-box chart-box-full" v-if="showTrendChart">
+                            <div class="chart-title">
+                                <i class="fa fa-chart-line"></i>
+                                能耗趋势对比图
+                            </div>
+                            <div id="trendChart" style="width: 100%; height: 400px;"></div>
+                        </div>
+                    </template>
+
+                    <!-- 历史数据查询 -->
+                    <template v-if="currentView === 'history'">
+                        <h1 class="page-title">
+                            <i class="fa fa-history"></i>
+                            历史数据查询
+                        </h1>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-filter"></i>
+                                    查询条件
+                                </div>
+                            </div>
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label">选择建筑</label>
+                                    <el-select v-model="historyParams.building" class="form-select" placeholder="请选择建筑">
+                                        <el-option label="全部建筑" value="all"></el-option>
+                                        <el-option label="办公楼A" value="buildingA"></el-option>
+                                        <el-option label="实验楼B" value="buildingB"></el-option>
+                                        <el-option label="宿舍楼C" value="buildingC"></el-option>
+                                        <el-option label="食堂D" value="buildingD"></el-option>
+                                    </el-select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">开始日期</label>
+                                    <el-date-picker
+                                        v-model="historyParams.startDate"
+                                        type="date"
+                                        placeholder="选择开始日期"
+                                        class="form-input"
+                                    ></el-date-picker>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">结束日期</label>
+                                    <el-date-picker
+                                        v-model="historyParams.endDate"
+                                        type="date"
+                                        placeholder="选择结束日期"
+                                        class="form-input"
+                                    ></el-date-picker>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">数据类型</label>
+                                    <el-select v-model="historyParams.dataType" class="form-select" placeholder="请选择数据类型">
+                                        <el-option label="全部数据" value="all"></el-option>
+                                        <el-option label="小时数据" value="hour"></el-option>
+                                        <el-option label="日数据" value="day"></el-option>
+                                        <el-option label="月数据" value="month"></el-option>
+                                    </el-select>
+                                </div>
+                            </div>
+                            <div class="button-group">
+                                <el-button type="primary" class="btn btn-primary" @click="handleHistoryQuery">
+                                    <i class="fa fa-search"></i>
+                                    查询
+                                </el-button>
+                                <el-button class="btn btn-outline" @click="handleHistoryReset">
+                                    <i class="fa fa-redo"></i>
+                                    重置
+                                </el-button>
+                                <el-button class="btn btn-success" @click="handleHistoryExport">
+                                    <i class="fa fa-download"></i>
+                                    数据导出
+                                </el-button>
+                            </div>
+                        </div>
+
+                        <div class="card" v-if="showHistoryTable">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-table"></i>
+                                    历史数据
+                                </div>
+                            </div>
+                            <el-table :data="historyTableData" class="data-table" stripe>
+                                <el-table-column prop="date" label="日期时间" width="180"></el-table-column>
+                                <el-table-column prop="building" label="建筑名称" width="150"></el-table-column>
+                                <el-table-column prop="type" label="数据类型" width="120"></el-table-column>
+                                <el-table-column prop="total" label="总能耗 (kWh)" width="150"></el-table-column>
+                                <el-table-column prop="electricity" label="电耗 (kWh)" width="150"></el-table-column>
+                                <el-table-column prop="water" label="水耗 (kWh)" width="150"></el-table-column>
+                                <el-table-column prop="gas" label="气耗 (kWh)" width="150"></el-table-column>
+                            </el-table>
+                            <div class="pagination-wrapper">
+                                <el-pagination
+                                    background
+                                    layout="prev, pager, next"
+                                    :total="100"
+                                    @current-change="handleHistoryPageChange"
+                                ></el-pagination>
+                            </div>
+                        </div>
+                    </template>
+
+                    <!-- 数据导出记录 -->
+                    <template v-if="currentView === 'export'">
+                        <h1 class="page-title">
+                            <i class="fa fa-file-export"></i>
+                            数据导出记录
+                        </h1>
+
+                        <div class="card">
+                            <div class="card-header">
+                                <div class="card-title">
+                                    <i class="fa fa-list"></i>
+                                    导出记录
+                                </div>
+                            </div>
+                            <el-table :data="exportTableData" class="data-table" stripe>
+                                <el-table-column prop="id" label="记录ID" width="120"></el-table-column>
+                                <el-table-column prop="exportTime" label="导出时间" width="180"></el-table-column>
+                                <el-table-column prop="fileName" label="文件名" width="250"></el-table-column>
+                                <el-table-column prop="fileSize" label="文件大小" width="120"></el-table-column>
+                                <el-table-column prop="status" label="状态">
+                                    <template #default="scope">
+                                        <span class="badge" :class="scope.row.status === '成功' ? 'success' : 'warning'">
+                                            {{ scope.row.status }}
+                                        </span>
+                                    </template>
+                                </el-table-column>
+                                <el-table-column prop="operator" label="操作人" width="120"></el-table-column>
+                                <el-table-column prop="handle" label="操作">
+                                    <template #default="scope">
+                                        <el-button type="primary" size="small" @click="handleExportDownload(scope.row)">
+                                            <i class="fa fa-download"></i> 下载
+                                        </el-button>
+                                        <el-button type="danger" size="small" @click="handleExportDelete(scope.row)">
+                                            <i class="fa fa-trash"></i> 删除
+                                        </el-button>
+                                    </template>
+                                </el-table-column>
+                            </el-table>
+                            <div class="pagination-wrapper">
+                                <el-pagination
+                                    background
+                                    layout="prev, pager, next"
+                                    :total="50"
+                                    @current-change="handleExportPageChange"
+                                ></el-pagination>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+            </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const currentView = ref('main');
+                const isSidebarExpanded = ref(false);
+                
+                const queryParams = reactive({
+                    building: 'all',
+                    startDate: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                    metric: 'total'
+                });
+                
+                const detailParams = reactive({
+                    building: 'all',
+                    startDate: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                    deviceType: 'all'
+                });
+                
+                const trendParams = reactive({
+                    compareType: 'building',
+                    startDate: new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                    metric: 'total'
+                });
+                
+                const historyParams = reactive({
+                    building: 'all',
+                    startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+                    endDate: new Date(),
+                    dataType: 'all'
+                });
+                
+                const showChart = ref(true);
+                const showTable = ref(true);
+                const tableData = ref([]);
+                
+                const showDetailTable = ref(false);
+                const detailTableData = ref([]);
+                
+                const showTrendChart = ref(false);
+                
+                const showHistoryTable = ref(false);
+                const historyTableData = ref([]);
+                
+                const exportTableData = ref([]);
+                
+                const switchView = (view) => {
+                    currentView.value = view;
+                    if (view === 'export') {
+                        generateExportData();
+                    }
+                };
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleQuery = () => {
+                    showChart.value = true;
+                    showTable.value = true;
+                    nextTick(() => {
+                        initQueryChart();
+                        generateTableData();
+                    });
+                };
+                
+                const handleReset = () => {
+                    queryParams.building = 'all';
+                    queryParams.startDate = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+                    queryParams.endDate = new Date();
+                    queryParams.metric = 'total';
+                    showChart.value = true;
+                    showTable.value = true;
+                    nextTick(() => {
+                        initQueryChart();
+                        generateTableData();
+                    });
+                };
+                
+                const handleExport = () => {
+                    ElementPlus.ElMessage.success('数据导出成功！');
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const handleDetailQuery = () => {
+                    showDetailTable.value = true;
+                    nextTick(() => {
+                        generateDetailTableData();
+                    });
+                };
+                
+                const handleDetailReset = () => {
+                    detailParams.building = 'all';
+                    detailParams.startDate = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+                    detailParams.endDate = new Date();
+                    detailParams.deviceType = 'all';
+                    showDetailTable.value = false;
+                };
+                
+                const handleDetailPageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const handleTrendQuery = () => {
+                    showTrendChart.value = true;
+                    nextTick(() => {
+                        initTrendChart();
+                    });
+                };
+                
+                const handleTrendReset = () => {
+                    trendParams.compareType = 'building';
+                    trendParams.startDate = new Date(new Date().getTime() - 7 * 24 * 60 * 60 * 1000);
+                    trendParams.endDate = new Date();
+                    trendParams.metric = 'total';
+                    showTrendChart.value = false;
+                };
+                
+                const handleHistoryQuery = () => {
+                    showHistoryTable.value = true;
+                    nextTick(() => {
+                        generateHistoryTableData();
+                    });
+                };
+                
+                const handleHistoryReset = () => {
+                    historyParams.building = 'all';
+                    historyParams.startDate = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
+                    historyParams.endDate = new Date();
+                    historyParams.dataType = 'all';
+                    showHistoryTable.value = false;
+                };
+                
+                const handleHistoryExport = () => {
+                    ElementPlus.ElMessage.success('历史数据导出成功！');
+                };
+                
+                const handleHistoryPageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const handleExportDownload = (row) => {
+                    ElementPlus.ElMessage.success(`正在下载：${row.fileName}`);
+                };
+                
+                const handleExportDelete = (row) => {
+                    ElementPlus.ElMessage.success(`删除成功：${row.fileName}`);
+                };
+                
+                const handleExportPageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const generateTableData = () => {
+                    const buildings = ['办公楼A', '实验楼B', '宿舍楼C', '食堂D'];
+                    const metrics = ['总能耗', '电耗', '水耗', '气耗'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        data.push({
+                            date: date.toLocaleDateString(),
+                            building: buildings[Math.floor(Math.random() * buildings.length)],
+                            metric: metrics[Math.floor(Math.random() * metrics.length)],
+                            value: (Math.random() * 1000).toFixed(2),
+                            trend: Math.random() > 0.5 ? 'up' : 'down',
+                            status: Math.random() > 0.2 ? '正常' : '异常'
+                        });
+                    }
+                    tableData.value = data.reverse();
+                };
+                
+                const generateDetailTableData = () => {
+                    const buildings = ['办公楼A', '实验楼B', '宿舍楼C', '食堂D'];
+                    const devices = ['中央空调-1', '中央空调-2', '照明-1', '照明-2', '电梯-1', '电梯-2', '水泵-1', '水泵-2'];
+                    const types = ['空调系统', '照明系统', '电梯系统', '水泵系统'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        data.push({
+                            date: date.toLocaleDateString(),
+                            building: buildings[Math.floor(Math.random() * buildings.length)],
+                            device: devices[Math.floor(Math.random() * devices.length)],
+                            type: types[Math.floor(Math.random() * types.length)],
+                            energy: (Math.random() * 500 + 100).toFixed(2),
+                            trend: Math.random() > 0.5 ? 'up' : 'down',
+                            status: Math.random() > 0.2 ? '正常' : '异常'
+                        });
+                    }
+                    detailTableData.value = data.reverse();
+                };
+                
+                const generateHistoryTableData = () => {
+                    const buildings = ['办公楼A', '实验楼B', '宿舍楼C', '食堂D'];
+                    const types = ['小时数据', '日数据', '月数据'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        data.push({
+                            date: date.toLocaleString(),
+                            building: buildings[Math.floor(Math.random() * buildings.length)],
+                            type: types[Math.floor(Math.random() * types.length)],
+                            total: (Math.random() * 10000).toFixed(2),
+                            electricity: (Math.random() * 8000).toFixed(2),
+                            water: (Math.random() * 1000).toFixed(2),
+                            gas: (Math.random() * 1000).toFixed(2)
+                        });
+                    }
+                    historyTableData.value = data.reverse();
+                };
+                
+                const generateExportData = () => {
+                    const fileNames = [
+                        '能耗明细_20240401.xlsx',
+                        '趋势对比_20240402.xlsx',
+                        '历史数据_20240403.xlsx',
+                        '月度统计_202403.xlsx',
+                        '设备能耗_20240404.xlsx'
+                    ];
+                    const operators = ['张三', '李四', '王五', '赵六'];
+                    const data = [];
+                    
+                    for (let i = 0; i < 10; i++) {
+                        const date = new Date();
+                        date.setDate(date.getDate() - i);
+                        data.push({
+                            id: `EXP${String(i + 1).padStart(4, '0')}`,
+                            exportTime: date.toLocaleString(),
+                            fileName: fileNames[Math.floor(Math.random() * fileNames.length)],
+                            fileSize: `${(Math.random() * 10 + 1).toFixed(2)}MB`,
+                            status: Math.random() > 0.2 ? '成功' : '失败',
+                            operator: operators[Math.floor(Math.random() * operators.length)]
+                        });
+                    }
+                    exportTableData.value = data;
+                };
+                
+                onMounted(() => {
+                    nextTick(() => {
+                        initQueryChart();
+                        generateTableData();
+                    });
+                });
+                
+                return {
+                    currentView,
+                    isSidebarExpanded,
+                    queryParams,
+                    detailParams,
+                    trendParams,
+                    historyParams,
+                    showChart,
+                    showTable,
+                    tableData,
+                    showDetailTable,
+                    detailTableData,
+                    showTrendChart,
+                    showHistoryTable,
+                    historyTableData,
+                    exportTableData,
+                    switchView,
+                    expandSidebar,
+                    collapseSidebar,
+                    handleQuery,
+                    handleReset,
+                    handleExport,
+                    handlePageChange,
+                    handleDetailQuery,
+                    handleDetailReset,
+                    handleDetailPageChange,
+                    handleTrendQuery,
+                    handleTrendReset,
+                    handleHistoryQuery,
+                    handleHistoryReset,
+                    handleHistoryExport,
+                    handleHistoryPageChange,
+                    handleExportDownload,
+                    handleExportDelete,
+                    handleExportPageChange
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+
+        function initTrendChart() {
+            const chartDom = document.getElementById('trendChart');
+            if (!chartDom) return;
+            
+            const chart = echarts.init(chartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: 'rgb(0, 170, 255)',
+                    textStyle: { color: '#333' },
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: 'rgb(0, 170, 255)'
+                        }
+                    }
+                },
+                legend: {
+                    data: ['办公楼A', '实验楼B', '宿舍楼C', '食堂D'],
+                    top: 0,
+                    textStyle: { color: '#666' }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['3/27', '3/28', '3/29', '3/30', '3/31', '4/1', '4/2'],
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'kWh',
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' },
+                    splitLine: { lineStyle: { color: '#f0f0f0' } }
+                },
+                series: [
+                    {
+                        name: '办公楼A',
+                        type: 'line',
+                        smooth: true,
+                        data: [2380, 2450, 2520, 2390, 2480, 2510, 2456],
+                        lineStyle: { color: 'rgb(0, 170, 255)', width: 3 },
+                        itemStyle: { color: 'rgb(0, 170, 255)' }
+                    },
+                    {
+                        name: '实验楼B',
+                        type: 'line',
+                        smooth: true,
+                        data: [1850, 1920, 1880, 1950, 1890, 1920, 1870],
+                        lineStyle: { color: 'rgb(12, 78, 55)', width: 3 },
+                        itemStyle: { color: 'rgb(12, 78, 55)' }
+                    },
+                    {
+                        name: '宿舍楼C',
+                        type: 'line',
+                        smooth: true,
+                        data: [1200, 1250, 1180, 1220, 1280, 1240, 1260],
+                        lineStyle: { color: 'rgb(46, 150, 100)', width: 3 },
+                        itemStyle: { color: 'rgb(46, 150, 100)' }
+                    },
+                    {
+                        name: '食堂D',
+                        type: 'line',
+                        smooth: true,
+                        data: [980, 1020, 990, 1050, 1010, 1030, 995],
+                        lineStyle: { color: 'rgb(18, 100, 70)', width: 3 },
+                        itemStyle: { color: 'rgb(18, 100, 70)' }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+
+        function initQueryChart() {
+            const chartDom = document.getElementById('queryChart');
+            if (!chartDom) return;
+            
+            const chart = echarts.init(chartDom);
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                    borderColor: 'rgb(0, 170, 255)',
+                    textStyle: { color: '#333' },
+                    axisPointer: {
+                        type: 'cross',
+                        label: {
+                            backgroundColor: 'rgb(0, 170, 255)'
+                        }
+                    }
+                },
+                legend: {
+                    data: ['总能耗', '电耗', '水耗', '气耗'],
+                    top: 0,
+                    textStyle: { color: '#666' }
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['3/27', '3/28', '3/29', '3/30', '3/31', '4/1', '4/2'],
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' }
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'kWh',
+                    axisLine: { lineStyle: { color: '#ddd' } },
+                    axisLabel: { color: '#666' },
+                    splitLine: { lineStyle: { color: '#f0f0f0' } }
+                },
+                series: [
+                    {
+                        name: '总能耗',
+                        type: 'line',
+                        smooth: true,
+                        data: [2380, 2450, 2520, 2390, 2480, 2510, 2456],
+                        lineStyle: { color: 'rgb(0, 170, 255)', width: 3 },
+                        itemStyle: { color: 'rgb(0, 170, 255)' },
+                        areaStyle: {
+                            color: {
+                                type: 'linear',
+                                x: 0, y: 0, x2: 0, y2: 1,
+                                colorStops: [
+                                    { offset: 0, color: 'rgba(0, 170, 255, 0.3)' },
+                                    { offset: 1, color: 'rgba(0, 170, 255, 0.05)' }
+                                ]
+                            }
+                        }
+                    },
+                    {
+                        name: '电耗',
+                        type: 'line',
+                        smooth: true,
+                        data: [1800, 1850, 1900, 1820, 1880, 1910, 1870],
+                        lineStyle: { color: 'rgb(12, 78, 55)', width: 3 },
+                        itemStyle: { color: 'rgb(12, 78, 55)' }
+                    },
+                    {
+                        name: '水耗',
+                        type: 'line',
+                        smooth: true,
+                        data: [350, 360, 370, 355, 365, 370, 360],
+                        lineStyle: { color: 'rgb(18, 100, 70)', width: 3 },
+                        itemStyle: { color: 'rgb(18, 100, 70)' }
+                    },
+                    {
+                        name: '气耗',
+                        type: 'line',
+                        smooth: true,
+                        data: [230, 240, 250, 235, 245, 250, 240],
+                        lineStyle: { color: 'rgb(0, 150, 225)', width: 3 },
+                        itemStyle: { color: 'rgb(0, 150, 225)' }
+                    }
+                ]
+            };
+            chart.setOption(option);
+            window.addEventListener('resize', () => chart.resize());
+        }
+    </script>
+</body>
+</html>

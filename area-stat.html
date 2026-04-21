@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 楼宇能耗统计</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            background-color: #F5F7FA;
+        }
+        #app {
+            visibility: hidden;
+        }
+        #app.loaded {
+            visibility: visible;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html" class="active">楼宇管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="area.html" class="sidebar-item">
+                        <i class="fa fa-building"></i>
+                        <span class="sidebar-text">楼宇列表</span>
+                    </a>
+                    <a href="area-map.html" class="sidebar-item">
+                        <i class="fa fa-project-diagram"></i>
+                        <span class="sidebar-text">楼宇拓扑图</span>
+                    </a>
+                    <a href="area-stat.html" class="sidebar-item active">
+                        <i class="fa fa-chart-bar"></i>
+                        <span class="sidebar-text">楼宇能耗统计</span>
+                    </a>
+                    <a href="area-log.html" class="sidebar-item">
+                        <i class="fa fa-file-text"></i>
+                        <span class="sidebar-text">楼宇操作日志</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <!-- 顶部搜索栏 -->
+                <div class="search-bar">
+                    <div class="search-row">
+                        <div class="search-item">
+                            <label>选择楼宇</label>
+                            <el-select v-model="statParams.region" size="small" placeholder="请选择楼宇">
+                                <el-option label="全部楼宇" value="all"></el-option>
+                                <el-option label="全公司" value="all"></el-option>
+                                <el-option label="办公楼A" value="bldA"></el-option>
+                                <el-option label="办公楼B" value="bldB"></el-option>
+                                <el-option label="研发楼" value="rd"></el-option>
+                                <el-option label="生产厂房" value="factory"></el-option>
+                                <el-option label="员工宿舍楼" value="dorm"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>统计类型</label>
+                            <el-select v-model="statParams.type" size="small" placeholder="请选择统计类型">
+                                <el-option label="总能耗" value="total"></el-option>
+                                <el-option label="电耗" value="electricity"></el-option>
+                                <el-option label="水耗" value="water"></el-option>
+                                <el-option label="气耗" value="gas"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="search-item">
+                            <label>开始日期</label>
+                            <el-date-picker
+                                v-model="statParams.startDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择开始日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-item">
+                            <label>结束日期</label>
+                            <el-date-picker
+                                v-model="statParams.endDate"
+                                type="date"
+                                size="small"
+                                placeholder="选择结束日期"
+                            ></el-date-picker>
+                        </div>
+                        <div class="search-buttons">
+                            <el-button type="primary" size="small" @click="handleSearch">
+                                <i class="fa fa-search"></i>
+                                查询
+                            </el-button>
+                            <el-button size="small" @click="handleReset">
+                                <i class="fa fa-redo"></i>
+                                重置
+                            </el-button>
+                            <el-button type="success" size="small" @click="handleExport">
+                                <i class="fa fa-download"></i>
+                                导出报表
+                            </el-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 数据展示区域 -->
+                <div class="data-content">
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <i class="fa fa-bolt"></i>
+                            <div class="value">12,456.8</div>
+                            <div class="label">今日总能耗 (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-calendar-week"></i>
+                            <div class="value">86,234.5</div>
+                            <div class="label">本周累计 (kWh)</div>
+                        </div>
+                        <div class="stat-card">
+                            <i class="fa fa-calendar-alt"></i>
+                            <div class="value">358,923.1</div>
+                            <div class="label">本月累计 (kWh)</div>
+                        </div>
+                        <div class="stat-card highlight">
+                            <i class="fa fa-calendar"></i>
+                            <div class="value">4,256,123.8</div>
+                            <div class="label">本年累计 (kWh)</div>
+                        </div>
+                    </div>
+
+                    <div class="chart-box chart-box-full">
+                        <div class="chart-title">
+                            <i class="fa fa-chart-bar"></i>
+                            楼宇能耗对比
+                        </div>
+                        <div id="regionChart" style="width: 100%; height: 400px;"></div>
+                    </div>
+
+                    <div class="card">
+                        <div class="card-header">
+                            <div class="card-title">
+                                <i class="fa fa-table"></i>
+                                楼宇能耗明细
+                            </div>
+                        </div>
+                        <el-table :data="regionStatData" class="data-table" stripe>
+                            <el-table-column prop="region" label="楼宇名称" width="150"></el-table-column>
+                            <el-table-column prop="level" label="楼宇级别" width="100"></el-table-column>
+                            <el-table-column prop="deviceCount" label="设备数量" width="100"></el-table-column>
+                            <el-table-column prop="totalEnergy" label="总能耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="electricity" label="电耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="water" label="水耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="gas" label="气耗 (kWh)" width="150"></el-table-column>
+                            <el-table-column prop="trend" label="趋势">
+                                <template #default="scope">
+                                    <span v-if="scope.row.trend === 'up'" style="color: #e74c3c;">
+                                        <i class="fa fa-arrow-up"></i> 上升
+                                    </span>
+                                    <span v-else style="color: #27ae60;">
+                                        <i class="fa fa-arrow-down"></i> 下降
+                                    </span>
+                                </template>
+                            </el-table-column>
+                        </el-table>
+                        <div class="pagination-wrapper">
+                            <el-pagination
+                                background
+                                layout="prev, pager, next"
+                                :total="31"
+                                @current-change="handlePageChange"
+                            ></el-pagination>
+                        </div>
+                    </div>
+                </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, nextTick, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const statParams = reactive({
+                    region: 'all',
+                    type: 'total',
+                    startDate: new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000),
+                    endDate: new Date()
+                });
+                
+                const regionStatData = ref([]);
+                const isSidebarExpanded = ref(false);
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const handleSearch = () => {
+                    ElementPlus.ElMessage.success('查询成功！');
+                    generateRegionStatData();
+                    initRegionChart();
+                };
+                
+                const handleReset = () => {
+                    statParams.region = 'all';
+                    statParams.type = 'total';
+                    statParams.startDate = new Date(new Date().getTime() - 30 * 24 * 60 * 60 * 1000);
+                    statParams.endDate = new Date();
+                    generateRegionStatData();
+                    initRegionChart();
+                    ElementPlus.ElMessage.info('已重置筛选条件');
+                };
+                
+                const handleExport = () => {
+                    ElementPlus.ElMessage.success('报表导出成功！');
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const generateRegionStatData = () => {
+                    const regions = ['全公司', '办公楼A', '办公楼B', '研发楼', '生产厂房', '员工宿舍楼', '食堂', '活动中心', '仓库A', '仓库B'];
+                    const levels = ['公司级', '楼宇级', '部门级'];
+                    const data = [];
+                    
+                    for (let i = 0; i < regions.length; i++) {
+                        data.push({
+                            region: regions[i],
+                            level: levels[Math.floor(Math.random() * levels.length)],
+                            deviceCount: Math.floor(Math.random() * 5000) + 1000,
+                            totalEnergy: (Math.random() * 100000 + 10000).toFixed(2),
+                            electricity: (Math.random() * 80000 + 8000).toFixed(2),
+                            water: (Math.random() * 10000 + 1000).toFixed(2),
+                            gas: (Math.random() * 10000 + 1000).toFixed(2),
+                            trend: Math.random() > 0.5 ? 'up' : 'down'
+                        });
+                    }
+                    regionStatData.value = data;
+                };
+                
+                const initRegionChart = () => {
+                    const chartDom = document.getElementById('regionChart');
+                    if (!chartDom) return;
+                    
+                    const chart = echarts.init(chartDom);
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: 'rgb(0, 170, 255)',
+                            textStyle: { color: '#333' }
+                        },
+                        legend: {
+                            data: ['总能耗', '电耗', '水耗', '气耗'],
+                            top: 0
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: ['全公司', '办公楼A', '办公楼B', '研发楼', '生产厂房', '员工宿舍楼', '食堂', '活动中心', '仓库A', '仓库B'],
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: 'kWh',
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' },
+                            splitLine: { lineStyle: { color: '#f0f0f0' } }
+                        },
+                        series: [
+                            {
+                                name: '总能耗',
+                                type: 'bar',
+                                data: [124568, 23456, 34567, 28956, 19876, 8956, 7823, 9234, 8765, 6543],
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(0, 170, 255)' },
+                                            { offset: 1, color: 'rgb(12, 78, 55)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '电耗',
+                                type: 'bar',
+                                data: [98765, 18765, 27654, 23123, 15654, 7123, 6234, 7345, 6987, 5234],
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(18, 100, 70)' },
+                                            { offset: 1, color: 'rgb(0, 150, 225)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '水耗',
+                                type: 'bar',
+                                data: [12345, 2345, 3456, 2876, 1987, 895, 782, 923, 876, 654],
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(46, 150, 100)' },
+                                            { offset: 1, color: 'rgb(18, 100, 70)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '气耗',
+                                type: 'bar',
+                                data: [13458, 2346, 3457, 2957, 2235, 938, 807, 966, 899, 655],
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(0, 150, 225)' },
+                                            { offset: 1, color: 'rgb(46, 150, 100)' }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                };
+                
+                onMounted(() => {
+                    generateRegionStatData();
+                    initRegionChart();
+                    document.getElementById('app').classList.add('loaded');
+                });
+                
+                return {
+                    statParams,
+                    regionStatData,
+                    isSidebarExpanded,
+                    handleSearch,
+                    handleReset,
+                    handleExport,
+                    handlePageChange,
+                    expandSidebar,
+                    collapseSidebar
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>

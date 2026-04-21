@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>建筑能源智能管理与运营优化系统 - 楼宇能耗详情</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/element-plus/dist/index.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.5.1/css/v4-shims.min.css">
+    <link rel="stylesheet" href="yangshi.css">
+    <style>
+        .form-group .el-date-editor .el-input__wrapper {
+            padding-left: 36px !important;
+            padding-right: 32px !important;
+        }
+        .form-group .el-select .el-input__wrapper {
+            padding-right: 32px !important;
+        }
+        .form-group .el-date-editor .el-input__prefix {
+            left: 12px !important;
+        }
+        .form-group .el-date-editor .el-input__suffix {
+            right: 8px !important;
+        }
+        .form-group .el-select .el-input__suffix {
+            right: 8px !important;
+        }
+    </style>
+    <style>
+        .form-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        .form-group {
+            flex-shrink: 0;
+        }
+        .form-group .el-select,
+        .form-group .el-date-editor {
+            width: 240px !important;
+            height: 48px !important;
+            line-height: 48px !important;
+        }
+        .form-group .el-select .el-input__wrapper,
+        .form-group .el-date-editor .el-input__wrapper {
+            width: 240px !important;
+            height: 48px !important;
+            padding: 0 16px !important;
+            box-sizing: border-box !important;
+            border-radius: 8px !important;
+            border: 1px solid #dcdfe6 !important;
+            box-shadow: none !important;
+            background-color: #fff !important;
+            transition: border-color 0.2s ease;
+        }
+        .form-group .el-select .el-input__wrapper:hover,
+        .form-group .el-date-editor .el-input__wrapper:hover {
+            border-color: #c0c4cc !important;
+        }
+        .form-group .el-select .el-input__wrapper.is-focus,
+        .form-group .el-date-editor .el-input__wrapper.is-focus {
+            border-color: #38A169 !important;
+        }
+        .form-group .el-select .el-input__inner,
+        .form-group .el-date-editor .el-input__inner {
+            height: 48px !important;
+            line-height: 48px !important;
+            font-size: 14px !important;
+            padding: 0 !important;
+        }
+        .form-group .el-date-editor .el-input__prefix {
+            left: 12px !important;
+        }
+        .form-group .el-date-editor .el-input__suffix {
+            right: 8px !important;
+        }
+        .form-group .el-select .el-input__suffix {
+            right: 8px !important;
+        }
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #606266;
+        }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <nav class="navbar">
+            <div class="navbar-brand">
+                <img src="imges/duibiao.png" alt="logo">
+                <span>建筑能源智能管理系统</span>
+            </div>
+            <div class="navbar-menu">
+                <a href="home.html" class="active">首页概览</a>
+                <a href="query.html">数据查询</a>
+                <a href="analysis.html">统计分析</a>
+                <a href="device.html">设备管理</a>
+                <a href="area.html">区域管理</a>
+                <a href="chat.html">AI问答</a>
+            </div>
+        </nav>
+
+        <div class="main-layout">
+            <aside class="sidebar" @mouseenter="expandSidebar" @mouseleave="collapseSidebar" :class="{ 'expanded': isSidebarExpanded }">
+                <div class="sidebar-header">
+                    <div class="sidebar-logo">
+                        <span class="sidebar-text">建筑能源智能管理系统</span>
+                    </div>
+                </div>
+                <nav class="sidebar-menu">
+                    <a href="home.html" class="sidebar-item">
+                        <i class="fa fa-home"></i>
+                        <span class="sidebar-text">首页概览</span>
+                    </a>
+                    <a href="home-energy.html" class="sidebar-item">
+                        <i class="fa fa-chart-line"></i>
+                        <span class="sidebar-text">公司能耗总览</span>
+                    </a>
+                    <a href="home-province.html" class="sidebar-item active">
+                        <i class="fa fa-building"></i>
+                        <span class="sidebar-text">楼宇能耗详情</span>
+                    </a>
+                    <a href="home-device.html" class="sidebar-item">
+                        <i class="fa fa-pie-chart"></i>
+                        <span class="sidebar-text">设备分布统计</span>
+                    </a>
+                </nav>
+            </aside>
+
+            <div class="main-content" :class="{ 'sidebar-collapsed': !isSidebarExpanded }">
+                <header class="top-header">
+                    <div class="header-left">
+                        <h1 class="header-title">
+                            <i class="fa fa-building"></i>
+                            楼宇能耗详情
+                        </h1>
+                    </div>
+                    <div class="header-right">
+                        <div class="user-info-card">
+                            <div class="user-info-row">
+                                <div class="card-time">
+                                    <i class="fa fa-clock"></i>
+                                    {{ currentTime }}
+                                </div>
+                            </div>
+                            <div class="user-info-row">
+                                <div class="card-user">
+                                    <i class="fa fa-user-circle"></i>
+                                    <span>管理员</span>
+                                </div>
+                                <div class="card-status">
+                                    <span class="status-dot"></span>
+                                    在线
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </header>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa fa-filter"></i>
+                            筛选条件
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label class="form-label">选择楼宇</label>
+                            <el-select v-model="filterParams.region" class="form-select" placeholder="请选择楼宇">
+                                <el-option label="全部楼宇" value="all"></el-option>
+                                <el-option label="办公楼A" value="officeA"></el-option>
+                                <el-option label="办公楼B" value="officeB"></el-option>
+                                <el-option label="研发楼" value="rd"></el-option>
+                                <el-option label="生产厂房" value="factory"></el-option>
+                                <el-option label="员工宿舍楼" value="dorm"></el-option>
+                                <el-option label="食堂活动中心" value="canteen"></el-option>
+                            </el-select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">开始日期</label>
+                            <el-date-picker
+                                v-model="filterParams.startDate"
+                                type="date"
+                                placeholder="选择开始日期"
+                                class="form-input"
+                            ></el-date-picker>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">结束日期</label>
+                            <el-date-picker
+                                v-model="filterParams.endDate"
+                                type="date"
+                                placeholder="选择结束日期"
+                                class="form-input"
+                            ></el-date-picker>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">能耗类型</label>
+                            <el-select v-model="filterParams.energyType" class="form-select" placeholder="请选择能耗类型">
+                                <el-option label="总能耗" value="total"></el-option>
+                                <el-option label="电力能耗" value="electricity"></el-option>
+                                <el-option label="水耗" value="water"></el-option>
+                                <el-option label="气耗" value="gas"></el-option>
+                            </el-select>
+                        </div>
+                    </div>
+                    <div class="button-group">
+                        <el-button type="primary" class="btn btn-primary" @click="handleSearch">
+                            <i class="fa fa-search"></i>
+                            查询
+                        </el-button>
+                        <el-button class="btn btn-outline" @click="handleReset">
+                            <i class="fa fa-redo"></i>
+                            重置
+                        </el-button>
+                        <el-button class="btn btn-success" @click="handleExport">
+                            <i class="fa fa-download"></i>
+                            导出报表
+                        </el-button>
+                    </div>
+                </div>
+
+                <div class="chart-box chart-box-full" style="position: relative;">
+                    <div class="chart-title">
+                        <i class="fa fa-bar-chart"></i>
+                        各楼宇/部门能耗对比
+                    </div>
+                    <div id="provinceChart" style="width: 100%; height: 400px; transition: opacity 0.3s ease;" :style="{ opacity: isLoading ? 0.4 : 1 }"></div>
+                    <div v-if="isLoading" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); background: rgba(255,255,255,0.9); padding: 15px 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100;">
+                        <i class="fa fa-spinner fa-spin" style="color: #38A169; margin-right: 8px;"></i>
+                        <span style="color: #333; font-weight: 500;">数据加载中...</span>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa fa-table"></i>
+                            楼宇/部门能耗详情列表
+                        </div>
+                    </div>
+                    <el-table :data="provinceData" class="data-table" stripe>
+                        <el-table-column prop="rank" label="排名" width="80" align="center"></el-table-column>
+                        <el-table-column prop="name" label="楼宇" width="120"></el-table-column>
+                        <el-table-column prop="region" label="所属分区" width="120"></el-table-column>
+                        <el-table-column prop="totalEnergy" label="总能耗 (万kWh)" width="150"></el-table-column>
+                        <el-table-column prop="electricity" label="电力能耗 (万kWh)" width="160"></el-table-column>
+                        <el-table-column prop="water" label="水耗 (万kWh)" width="150"></el-table-column>
+                        <el-table-column prop="gas" label="气耗 (万kWh)" width="150"></el-table-column>
+                        <el-table-column prop="ratio" label="占比" width="120">
+                            <template #default="scope">
+                                <el-progress :percentage="scope.row.ratio" :color="'#0c4e37'"></el-progress>
+                            </template>
+                        </el-table-column>
+                        <el-table-column label="操作" width="100">
+                            <template #default="scope">
+                                <el-button type="primary" size="small" @click="viewDetail(scope.row)">
+                                    <i class="fa fa-eye"></i> 详情
+                                </el-button>
+                            </template>
+                        </el-table-column>
+                    </el-table>
+                    <div class="pagination-wrapper">
+                        <el-pagination
+                            background
+                            layout="prev, pager, next"
+                            :total="31"
+                            @current-change="handlePageChange"
+                        ></el-pagination>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/vue@3/dist/vue.global.prod.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/element-plus/dist/index.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+    <script>
+        const { createApp, ref, reactive, onMounted, computed } = Vue;
+        
+        createApp({
+            setup() {
+                const currentTime = ref('');
+                const isSidebarExpanded = ref(false);
+                const isLoading = ref(false);
+                
+                const getMonthFirstDay = () => {
+                    const now = new Date();
+                    return new Date(now.getFullYear(), now.getMonth(), 1);
+                };
+                
+                const filterParams = reactive({
+                    region: 'all',
+                    startDate: getMonthFirstDay(),
+                    endDate: new Date(),
+                    energyType: 'total'
+                });
+                
+                const originalProvinceData = [
+                    { rank: 1, name: '办公楼A', region: '办公区', totalEnergy: 158.6, electricity: 108.2, water: 18.5, gas: 31.9, ratio: 12.5 },
+                    { rank: 2, name: '办公楼B', region: '办公区', totalEnergy: 145.3, electricity: 99.5, water: 16.8, gas: 29.0, ratio: 11.5 },
+                    { rank: 3, name: '研发楼', region: '研发区', totalEnergy: 132.8, electricity: 90.8, water: 15.2, gas: 26.8, ratio: 10.5 },
+                    { rank: 4, name: '生产厂房', region: '生产区', totalEnergy: 125.6, electricity: 86.2, water: 14.5, gas: 24.9, ratio: 9.9 },
+                    { rank: 5, name: '员工宿舍楼', region: '生活区', totalEnergy: 118.9, electricity: 81.5, water: 13.8, gas: 23.6, ratio: 9.4 },
+                    { rank: 6, name: '食堂活动中心', region: '生活区', totalEnergy: 105.2, electricity: 72.1, water: 12.1, gas: 21.0, ratio: 8.3 },
+                    { rank: 7, name: '仓储中心', region: '物流区', totalEnergy: 98.5, electricity: 67.5, water: 11.3, gas: 19.7, ratio: 7.8 },
+                    { rank: 8, name: '变电站', region: '后勤区', totalEnergy: 92.3, electricity: 63.2, water: 10.8, gas: 18.3, ratio: 7.3 },
+                    { rank: 9, name: '水泵房', region: '后勤区', totalEnergy: 86.7, electricity: 59.4, water: 10.1, gas: 17.2, ratio: 6.8 },
+                    { rank: 10, name: '保安室', region: '门岗区', totalEnergy: 78.4, electricity: 53.7, water: 9.2, gas: 15.5, ratio: 6.2 }
+                ];
+                
+                const provinceData = ref([...originalProvinceData]);
+                
+                const regionNameMap = {
+                    'all': '全部楼宇',
+                    'officeA': '办公楼A',
+                    'officeB': '办公楼B',
+                    'rd': '研发楼',
+                    'factory': '生产厂房',
+                    'dorm': '员工宿舍楼',
+                    'canteen': '食堂活动中心'
+                };
+                
+                const updateTime = () => {
+                    const now = new Date();
+                    currentTime.value = now.toLocaleString('zh-CN', {
+                        year: 'numeric',
+                        month: '2-digit',
+                        day: '2-digit',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit'
+                    });
+                };
+                
+                const expandSidebar = () => {
+                    isSidebarExpanded.value = true;
+                };
+                
+                const collapseSidebar = () => {
+                    isSidebarExpanded.value = false;
+                };
+                
+                const applyDateFactor = (baseValue) => {
+                    const start = new Date(filterParams.startDate);
+                    const end = new Date(filterParams.endDate);
+                    const days = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
+                    const defaultDays = 30;
+                    const factor = days / defaultDays;
+                    return (baseValue * factor * (0.9 + Math.random() * 0.2)).toFixed(1);
+                };
+                
+                const filterData = () => {
+                    let filtered = [...originalProvinceData];
+                    
+                    if (filterParams.region !== 'all') {
+                        const targetName = regionNameMap[filterParams.region];
+                        filtered = filtered.filter(item => item.name === targetName);
+                    }
+                    
+                    filtered = filtered.map(item => ({
+                        ...item,
+                        totalEnergy: applyDateFactor(item.totalEnergy),
+                        electricity: applyDateFactor(item.electricity),
+                        water: applyDateFactor(item.water),
+                        gas: applyDateFactor(item.gas)
+                    }));
+                    
+                    filtered.forEach((item, index) => {
+                        item.rank = index + 1;
+                    });
+                    
+                    return filtered;
+                };
+                
+                const handleSearch = () => {
+                    if (filterParams.startDate && filterParams.endDate) {
+                        const start = new Date(filterParams.startDate);
+                        const end = new Date(filterParams.endDate);
+                        if (end < start) {
+                            ElementPlus.ElMessage.error('结束日期不能早于开始日期，请重新选择！');
+                            return;
+                        }
+                    }
+                    
+                    isLoading.value = true;
+                    
+                    setTimeout(() => {
+                        provinceData.value = filterData();
+                        initProvinceChart(true);
+                        isLoading.value = false;
+                        
+                        const regionText = regionNameMap[filterParams.region] || '全部楼宇';
+                        ElementPlus.ElMessage.success(`筛选完成：${regionText}，数据已更新！`);
+                    }, 600);
+                };
+                
+                const handleReset = () => {
+                    filterParams.region = 'all';
+                    filterParams.startDate = getMonthFirstDay();
+                    filterParams.endDate = new Date();
+                    filterParams.energyType = 'total';
+                    
+                    isLoading.value = true;
+                    
+                    setTimeout(() => {
+                        provinceData.value = [...originalProvinceData];
+                        initProvinceChart(false);
+                        isLoading.value = false;
+                        ElementPlus.ElMessage.info('已重置筛选条件，恢复默认数据');
+                    }, 400);
+                };
+                
+                const handleExport = () => {
+                    const regionText = regionNameMap[filterParams.region] || '全部楼宇';
+                    ElementPlus.ElMessage.success(`正在导出：${regionText} 的能耗报表...`);
+                    
+                    setTimeout(() => {
+                        ElementPlus.ElMessage.success(`${regionText} 能耗报表导出成功！共 ${provinceData.value.length} 条数据`);
+                    }, 800);
+                };
+                
+                const handlePageChange = (page) => {
+                    console.log('当前页:', page);
+                };
+                
+                const viewDetail = (row) => {
+                    ElementPlus.ElMessage.info(`查看${row.name}详情`);
+                };
+                
+                let provinceChartInstance = null;
+                
+                const initProvinceChart = (applyFilter = false) => {
+                    const chartDom = document.getElementById('provinceChart');
+                    if (!chartDom) return;
+                    
+                    if (provinceChartInstance) {
+                        provinceChartInstance.dispose();
+                    }
+                    
+                    provinceChartInstance = echarts.init(chartDom);
+                    
+                    let buildingNames = ['办公楼A', '办公楼B', '研发楼', '生产厂房', '员工宿舍楼', '食堂活动中心', '仓储中心', '变电站'];
+                    
+                    let totalData = [158.6, 145.3, 132.8, 125.6, 118.9, 105.2, 98.5, 92.3];
+                    let elecData = [108.2, 99.5, 90.8, 86.2, 81.5, 72.1, 67.5, 63.2];
+                    let waterData = [18.5, 16.8, 15.2, 14.5, 13.8, 12.1, 11.3, 10.8];
+                    let gasData = [31.9, 29.0, 26.8, 24.9, 23.6, 21.0, 19.7, 18.3];
+                    
+                    if (applyFilter && filterParams.region !== 'all') {
+                        const targetName = regionNameMap[filterParams.region];
+                        const idx = buildingNames.indexOf(targetName);
+                        if (idx >= 0) {
+                            buildingNames = [targetName];
+                            const factor = 0.9 + Math.random() * 0.2;
+                            totalData = [totalData[idx] * factor];
+                            elecData = [elecData[idx] * factor];
+                            waterData = [waterData[idx] * factor];
+                            gasData = [gasData[idx] * factor];
+                        }
+                    }
+                    
+                    const chart = provinceChartInstance;
+                    const option = {
+                        tooltip: {
+                            trigger: 'axis',
+                            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                            borderColor: 'rgb(0, 170, 255)',
+                            textStyle: { color: '#333' }
+                        },
+                        legend: {
+                            data: ['总能耗', '电力能耗', '水耗', '气耗'],
+                            top: 0
+                        },
+                        grid: {
+                            left: '3%',
+                            right: '4%',
+                            bottom: '3%',
+                            containLabel: true
+                        },
+                        xAxis: {
+                            type: 'category',
+                            data: buildingNames,
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' }
+                        },
+                        yAxis: {
+                            type: 'value',
+                            name: '万kWh',
+                            axisLine: { lineStyle: { color: '#ddd' } },
+                            axisLabel: { color: '#666' },
+                            splitLine: { lineStyle: { color: '#f0f0f0' } }
+                        },
+                        series: [
+                            {
+                                name: '总能耗',
+                                type: 'bar',
+                                data: totalData,
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(0, 170, 255)' },
+                                            { offset: 1, color: 'rgb(12, 78, 55)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '电力能耗',
+                                type: 'bar',
+                                data: elecData,
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(18, 100, 70)' },
+                                            { offset: 1, color: 'rgb(0, 150, 225)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '水耗',
+                                type: 'bar',
+                                data: waterData,
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(46, 150, 100)' },
+                                            { offset: 1, color: 'rgb(18, 100, 70)' }
+                                        ]
+                                    }
+                                }
+                            },
+                            {
+                                name: '气耗',
+                                type: 'bar',
+                                data: gasData,
+                                itemStyle: {
+                                    color: {
+                                        type: 'linear',
+                                        x: 0, y: 0, x2: 0, y2: 1,
+                                        colorStops: [
+                                            { offset: 0, color: 'rgb(0, 150, 225)' },
+                                            { offset: 1, color: 'rgb(46, 150, 100)' }
+                                        ]
+                                    }
+                                }
+                            }
+                        ]
+                    };
+                    chart.setOption(option);
+                    window.addEventListener('resize', () => chart.resize());
+                };
+                
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                    initProvinceChart();
+                });
+                
+                return {
+                    currentTime,
+                    filterParams,
+                    provinceData,
+                    isSidebarExpanded,
+                    isLoading,
+                    expandSidebar,
+                    collapseSidebar,
+                    handleSearch,
+                    handleReset,
+                    handleExport,
+                    handlePageChange,
+                    viewDetail
+                };
+            }
+        }).use(ElementPlus).mount('#app');
+    </script>
+</body>
+</html>
